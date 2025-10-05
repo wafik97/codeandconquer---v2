@@ -1,0 +1,38 @@
+Summary of Flow
+
+Connect → WebSocket handshake.
+
+Join → Player sends name → server assigns color → broadcast game state.
+
+Game Starts → 2 players connected → board enabled.
+
+Select Cell → Player clicks → solves puzzle → sends selection.
+
+Update Board → Server broadcasts claim → all clients color the tile.
+
+
+already have:
+
+Connection handling (WebSocketConfig).
+
+Player registration (PlayerManager / GameController).
+
+Frontend grid + puzzle panel.
+
+Message models (GameMessage, GameJoinMessage, GameUpdate).
+
+Missing pieces / improvements:
+
+Puzzle logic (right now any answer claims a cell).
+
+Clear separation of message types:
+
+Use GameJoinMessage for state sync.
+
+Use GameUpdate for tile claimed events.
+
+Retire GameMessage (too generic).
+
+Round/phase logic (e.g., “revenge” phase from your original plan).
+
+Win condition detection + broadcast.

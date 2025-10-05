@@ -1,0 +1,566 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Code and Conquer</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <script src="https://cdn.jsdelivr.net/npm/sockjs-client@1/dist/sockjs.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/stompjs@2.3.3/lib/stomp.min.js"></script>
+
+    <style>
+        body {
+            font-family: 'Courier New', monospace;
+            padding: 10px;
+            text-align: center;
+            background: linear-gradient(135deg, #0a0e27 0%, #1a1f3a 50%, #0f1419 100%);
+            min-height: 100vh;
+            margin: 0;
+            position: relative;
+            overflow-x: hidden;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image:
+                repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0, 255, 150, 0.03) 2px, rgba(0, 255, 150, 0.03) 4px),
+                repeating-linear-gradient(90deg, transparent, transparent 2px, rgba(0, 255, 150, 0.03) 2px, rgba(0, 255, 150, 0.03) 4px);
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        #map {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            grid-gap: 2px;
+            margin-top: 20px;
+            max-width: 650px;
+            margin-left: auto;
+            margin-right: auto;
+            padding: 25px;
+            background: linear-gradient(145deg, #1a1f3a 0%, #0d1117 100%);
+            border: 2px solid #00ff88;
+            border-radius: 8px;
+            box-shadow:
+                0 0 30px rgba(0, 255, 136, 0.3),
+                inset 0 0 20px rgba(0, 255, 136, 0.05);
+            position: relative;
+            z-index: 1;
+        }
+
+        #map::before {
+            content: '< TERRITORY />';
+            position: absolute;
+            top: -10px;
+            left: 20px;
+            background: #0d1117;
+            padding: 0 10px;
+            color: #00ff88;
+            font-size: 12px;
+            font-weight: bold;
+            letter-spacing: 2px;
+        }
+
+        .cell {
+            aspect-ratio: 1 / 1;
+            width: 95%;
+            border: 2px solid #00ff88;
+            position: relative;
+            cursor: pointer;
+            background: linear-gradient(135deg, #1e2a3a 0%, #0f1923 100%);
+            user-select: none;
+            touch-action: manipulation;
+            transition: all 0.3s ease;
+            overflow: hidden;
+        }
+
+        .cell::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(0, 255, 136, 0.3), transparent);
+            transition: left 0.5s;
+        }
+
+        .cell:hover::before {
+            left: 100%;
+        }
+
+        .cell:hover {
+            border-color: #00ffff;
+            box-shadow:
+                0 0 20px rgba(0, 255, 255, 0.5),
+                inset 0 0 20px rgba(0, 255, 255, 0.1);
+            transform: scale(1.02);
+            z-index: 10;
+        }
+
+        .cell::after {
+            content: '';
+            position: absolute;
+            top: 5px;
+            left: 5px;
+            right: 5px;
+            bottom: 5px;
+            border: 1px solid rgba(0, 255, 136, 0.2);
+            pointer-events: none;
+        }
+
+        #roleModal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(10, 14, 39, 0.95);
+            backdrop-filter: blur(5px);
+            padding-top: 60px;
+            animation: fadeIn 0.3s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        @keyframes fadeOut {
+            from { opacity: 1; }
+            to { opacity: 0; }
+        }
+
+        #roleModal.closing {
+            animation: fadeOut 0.3s ease;
+        }
+
+        #roleModalContent {
+            background: linear-gradient(145deg, #1a1f3a 0%, #0d1117 100%);
+            margin: 10% auto;
+            padding: 40px;
+            border: 2px solid #00ff88;
+            width: 350px;
+            text-align: center;
+            border-radius: 8px;
+            box-shadow: 0 0 40px rgba(0, 255, 136, 0.4);
+            animation: slideDown 0.4s ease;
+        }
+
+        @keyframes slideDown {
+            from {
+                transform: translateY(-50px);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+
+        #roleModalContent h3 {
+            color: #00ffff;
+            text-shadow: 0 0 15px rgba(0, 255, 255, 0.8);
+            font-family: 'Courier New', monospace;
+            letter-spacing: 2px;
+            margin-bottom: 25px;
+        }
+
+        #roleModalContent button {
+            width: 100%;
+            margin: 10px 0;
+        }
+
+        .cell span {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-weight: bold;
+            font-size: 16px;
+            color: #00ff88;
+            text-shadow: 0 0 10px rgba(0, 255, 136, 0.8);
+            z-index: 1;
+            font-family: 'Courier New', monospace;
+        }
+
+        #players {
+            margin-top: 20px;
+            font-size: 16px;
+            background: linear-gradient(145deg, #1a1f3a 0%, #0d1117 100%);
+            padding: 15px;
+            border-radius: 8px;
+            max-width: 400px;
+            margin-left: auto;
+            margin-right: auto;
+            box-shadow: 0 0 20px rgba(0, 255, 136, 0.2);
+            border: 1px solid #00ff88;
+            color: #00ff88;
+            z-index: 1;
+            position: relative;
+        }
+
+        #status {
+            margin-top: 10px;
+            font-weight: bold;
+            background: linear-gradient(145deg, #1a1f3a 0%, #0d1117 100%);
+            padding: 10px;
+            border-radius: 8px;
+            max-width: 400px;
+            margin-left: auto;
+            margin-right: auto;
+            box-shadow: 0 0 20px rgba(0, 255, 136, 0.2);
+            border: 1px solid #00ff88;
+            color: #00ffff;
+            z-index: 1;
+            position: relative;
+        }
+
+        #puzzle-panel {
+            display: none;
+            margin-top: 20px;
+            padding: 20px;
+            border: 2px solid #00ff88;
+            background: linear-gradient(145deg, #1a1f3a 0%, #0d1117 100%);
+            max-width: 300px;
+            margin-left: auto;
+            margin-right: auto;
+            border-radius: 8px;
+            box-shadow: 0 0 30px rgba(0, 255, 136, 0.4);
+            color: #00ff88;
+            z-index: 1;
+            position: relative;
+        }
+
+        #puzzle-panel h3 {
+            color: #00ffff;
+            text-shadow: 0 0 10px rgba(0, 255, 255, 0.6);
+        }
+
+        input, button {
+            padding: 10px;
+            font-size: 16px;
+            margin-top: 10px;
+            border-radius: 5px;
+            font-family: 'Courier New', monospace;
+        }
+
+        input {
+            background: #0d1117;
+            border: 1px solid #00ff88;
+            color: #00ff88;
+        }
+
+        input:focus {
+            outline: none;
+            box-shadow: 0 0 10px rgba(0, 255, 136, 0.5);
+        }
+
+        button {
+            background: linear-gradient(135deg, #00ff88 0%, #00cc70 100%);
+            color: #0d1117;
+            border: none;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        button:hover {
+            background: linear-gradient(135deg, #00ffff 0%, #00cccc 100%);
+            box-shadow: 0 0 20px rgba(0, 255, 255, 0.6);
+            transform: translateY(-2px);
+        }
+
+        h1 {
+            color: #00ff88;
+            text-shadow: 0 0 20px rgba(0, 255, 136, 0.8);
+            font-family: 'Courier New', monospace;
+            letter-spacing: 3px;
+            z-index: 1;
+            position: relative;
+        }
+
+        h1::before {
+            content: '{ ';
+            color: #00ffff;
+        }
+
+        h1::after {
+            content: ' }';
+            color: #00ffff;
+        }
+    </style>
+</head>
+<body>
+<h1>Code and Conquer</h1>
+
+<div id="roleModal" style="display: block;">
+    <div id="roleModalContent">
+        <h3>Choose your role</h3>
+        <button id="playerButton">Play as Player</button>
+        <button id="spectatorButton">Play as Spectator</button>
+    </div>
+</div>
+
+<div id="join-section" style="display: none;">
+    <label style="color: white;">Enter your name:</label>
+    <input type="text" id="nameInput">
+    <button onclick="joinGame()">Join Game</button>
+</div>
+
+<div id="status"></div>
+
+<div id="players"></div>
+
+<div id="map"></div>
+
+<div id="puzzle-panel">
+    <h3 id="puzzle-title"></h3>
+    <p id="puzzle-question">What is 2 + 2?</p>
+    <input type="text" id="puzzle-answer">
+    <br>
+    <button onclick="submitAnswer()">Submit Answer</button>
+</div>
+
+<script>
+    let stompClient = null;
+    let playerName = "";
+    let playerColor = "";
+    let gameStarted = false;
+    let selectedCellId = "";
+    let is_spectator = true;
+
+    function connect() {
+        const socket = new SockJS('/game');
+        stompClient = Stomp.over(socket);
+        stompClient.connect({}, function (frame) {
+            console.log('Connected: ' + frame);
+
+            stompClient.subscribe('/topic/join', function (message) {
+                const data = JSON.parse(message.body);
+                console.log('Players update:', data);
+
+                updatePlayersList(data.players);
+                gameStarted = data.gameStarted;
+                updateStatus();
+
+                if (gameStarted) {
+                    document.getElementById('map').style.pointerEvents = 'auto';
+                    document.getElementById('puzzle-panel').style.display = 'none';
+                } else {
+                    document.getElementById('map').style.pointerEvents = 'none';
+                }
+            });
+
+            stompClient.subscribe('/topic/game', function (message) {
+                const data = JSON.parse(message.body);
+                console.log('Cell update:', data);
+                colorCell(data.code, data.playerName);
+            });
+        });
+    }
+
+    function connectSpectator() {
+        const socket = new SockJS('/game');
+        stompClient = Stomp.over(socket);
+        stompClient.connect({}, function (frame) {
+            console.log('Connected as spectator: ' + frame);
+
+            stompClient.subscribe('/topic/join', function (message) {
+                const data = JSON.parse(message.body);
+                console.log('Players update (spectator):', data);
+
+                updatePlayersList(data.players);
+                gameStarted = data.gameStarted;
+                updateStatus();
+
+                document.getElementById('map').style.pointerEvents = 'none';
+                document.getElementById('puzzle-panel').style.display = 'none';
+            });
+
+            stompClient.subscribe('/topic/game', function (message) {
+                const data = JSON.parse(message.body);
+                console.log('Cell update (spectator):', data);
+                colorCell(data.code, data.playerName);
+            });
+        });
+    }
+
+    function joinGame() {
+        playerName = document.getElementById('nameInput').value.trim();
+        if (playerName === "") {
+            alert("Please enter a name.");
+            return;
+        }
+
+        stompClient.send("/app/join", {}, JSON.stringify({ playerName: playerName }));
+        document.getElementById('join-section').style.display = 'none';
+    }
+
+    function updatePlayersList(players) {
+        const playersDiv = document.getElementById('players');
+        playersDiv.innerHTML = "<strong>Players:</strong><br>";
+        for (const name in players) {
+            const color = players[name].color;
+            playersDiv.innerHTML += `${name} (${color})<br>`;
+            if (name === playerName) {
+                playerColor = color;
+            }
+        }
+    }
+
+    function updateStatus() {
+        const statusDiv = document.getElementById('status');
+        if (!gameStarted) {
+            statusDiv.innerHTML = "Waiting for another player to join...";
+        } else {
+            if (is_spectator) {
+                statusDiv.innerHTML = `Game Started! Enjoy watching!!`;
+            } else {
+                statusDiv.innerHTML = `Game Started! Your color: ${playerColor}`;
+            }
+        }
+    }
+
+    function buildMap() {
+        const mapDiv = document.getElementById('map');
+        mapDiv.innerHTML = "";
+        for (let i = 0; i < 25; i++) {
+            const cellId = 'cell-' + i;
+            const cell = document.createElement('div');
+            cell.className = 'cell';
+            cell.id = cellId;
+
+            const span = document.createElement('span');
+            span.innerText = i;
+            cell.appendChild(span);
+
+            cell.addEventListener('click', function() {
+                if (!gameStarted) return;
+
+                const currentBg = cell.style.backgroundColor;
+                const isConquered = currentBg && currentBg !== 'lightgray' && currentBg !== '';
+
+                if (isConquered) {
+                    alert("This cell is already conquered!");
+                    return;
+                }
+
+                selectedCellId = cellId;
+                showPuzzle(cellId);
+            });
+
+            mapDiv.appendChild(cell);
+        }
+    }
+
+    function showPuzzle(cellId) {
+        document.getElementById('puzzle-title').innerText = `Puzzle for ${cellId}`;
+        document.getElementById('puzzle-answer').value = '';
+        document.getElementById('puzzle-panel').style.display = 'block';
+    }
+
+    function submitAnswer() {
+        const answer = document.getElementById('puzzle-answer').value.trim();
+        if (answer === "") {
+            alert("Please enter an answer.");
+            return;
+        }
+
+        stompClient.send("/app/select", {}, JSON.stringify({
+            playerName: playerName,
+            code: selectedCellId
+        }));
+
+        document.getElementById('puzzle-panel').style.display = 'none';
+    }
+
+    function colorCell(cellId, ownerName) {
+        const cell = document.getElementById(cellId);
+        if (!cell) return;
+
+        let color = "gray";
+        if (ownerName === playerName) {
+            color = playerColor;
+        } else {
+            const playersDiv = document.getElementById('players').innerText;
+            const regex = new RegExp(`${ownerName} \\((.*?)\\)`);
+            const match = playersDiv.match(regex);
+            if (match) {
+                color = match[1];
+            }
+        }
+
+        if (color.toLowerCase() === 'red') {
+            cell.style.backgroundColor = '#ff0040';
+            cell.style.borderColor = '#ff0040';
+            cell.style.boxShadow = '0 0 20px rgba(255, 0, 64, 0.6), inset 0 0 20px rgba(255, 0, 64, 0.2)';
+        } else if (color.toLowerCase() === 'blue') {
+            cell.style.backgroundColor = '#0080ff';
+            cell.style.borderColor = '#0080ff';
+            cell.style.boxShadow = '0 0 20px rgba(0, 128, 255, 0.6), inset 0 0 20px rgba(0, 128, 255, 0.2)';
+        } else {
+            cell.style.backgroundColor = color;
+        }
+
+        if (selectedCellId === cellId) {
+            document.getElementById('puzzle-panel').style.display = 'none';
+            selectedCellId = "";
+        }
+    }
+
+    function closeModal() {
+        const modal = document.getElementById('roleModal');
+        modal.classList.add('closing');
+        setTimeout(() => {
+            modal.style.display = "none";
+            modal.classList.remove('closing');
+        }, 300);
+    }
+
+    window.onload = function () {
+        document.getElementById('roleModal').style.display = "block";
+
+        document.getElementById('playerButton').addEventListener('click', function() {
+            is_spectator = false;
+            closeModal();
+            setTimeout(() => {
+                initGame();
+            }, 300);
+        });
+
+        document.getElementById('spectatorButton').addEventListener('click', function() {
+            is_spectator = true;
+            closeModal();
+            setTimeout(() => {
+                initGame();
+            }, 300);
+        });
+    };
+
+    function initGame() {
+        buildMap();
+        const statusDiv = document.getElementById('status');
+
+        statusDiv.innerHTML = "Waiting for the players player to join...";
+        if (is_spectator) {
+            connectSpectator();
+            document.getElementById('join-section').style.display = 'none';
+        } else {
+            connect();
+            document.getElementById('join-section').style.display = 'block';
+        }
+    }
+</script>
+</body>
+</html>
