@@ -309,6 +309,7 @@
         <h3>Choose your role</h3>
         <button id="playerButton">Play as Player</button>
         <button id="spectatorButton">Play as Spectator</button>
+        <button id="backButton" style="display: none;">Back</button>
     </div>
 </div>
 
@@ -316,6 +317,7 @@
     <label style="color: white;">Enter your name:</label>
     <input type="text" id="nameInput">
     <button onclick="joinGame()">Join Game</button>
+
 </div>
 
 <div id="status"></div>
@@ -333,6 +335,258 @@
 </div>
 
 <script>
+
+    let stompClient = null;
+let playerName = "";
+let playerRole = ""; // "player" or "spectator"
+let selectedRoom = "";
+let playerColor = "";
+let gameStarted = false;
+let rooms = ["Room1", "Room2", "Room3", "Room4"]; // example rooms
+let playersInRooms = {}; // { roomName: number of players }
+
+// ----- ROLE & ROOM SELECTION -----
+window.onload = function() {
+    document.getElementById('roleModal').style.display = "block";
+
+    document.getElementById('playerButton').addEventListener('click', function() {
+        playerRole = "player";
+        showRoomSelection();
+         backButton.style.display = 'block';
+    });
+
+    document.getElementById('spectatorButton').addEventListener('click', function() {
+        playerRole = "spectator";
+        showRoomSelection();
+         backButton.style.display = 'block';
+    });
+};
+
+const backButton = document.getElementById('backButton');
+
+function showRoleSelection() {
+    const modalContent = document.getElementById('roleModalContent');
+    modalContent.innerHTML = `<h3>Choose your role</h3>
+        <button id="playerButton">Play as Player</button>
+        <button id="spectatorButton">Play as Spectator</button>`;
+
+    // Add back button at the end, hide it
+    backButton.style.display = 'none';
+    modalContent.appendChild(backButton);
+
+    // Re-add event listeners for role buttons
+    document.getElementById('playerButton').addEventListener('click', function() {
+        playerRole = "player";
+        showRoomSelection();
+    });
+    document.getElementById('spectatorButton').addEventListener('click', function() {
+        playerRole = "spectator";
+        showRoomSelection();
+    });
+}
+
+
+backButton.addEventListener('click', function() {
+    showRoleSelection();
+});
+
+
+function showRoomSelection() {
+    const modalContent = document.getElementById('roleModalContent');
+
+    // Only replace the content for room select & join
+    modalContent.innerHTML = `<h3>Select a Room</h3>
+        <select id="roomSelect"></select>
+        <br><br>
+        <button onclick="joinSelectedRoom()">Join Room</button>`;
+
+    // Show Back button and append it after the new content
+    backButton.style.display = 'block';
+    modalContent.appendChild(backButton);
+
+    const roomSelect = document.getElementById('roomSelect');
+    rooms.forEach(room => {
+        let playerCount = playersInRooms[room] || 0;
+        if (playerRole === "spectator" || playerCount < 2) {
+            const option = document.createElement('option');
+            option.value = room;
+            option.text = room + (playerRole === "player" ? ` (${playerCount}/2 players)` : "");
+            roomSelect.appendChild(option);
+        }
+    });
+}
+
+
+    // show modal
+    //   document.getElementById('roleModal').style.display = "block";
+
+
+function joinSelectedRoom() {
+    selectedRoom = document.getElementById('roomSelect').value;
+    document.getElementById('roleModal').style.display = "none";
+    document.getElementById('join-section').style.display = "block";
+}
+
+// ----- CONNECT & JOIN -----
+function connectToRoom() {
+    const socket = new SockJS('/game');
+    stompClient = Stomp.over(socket);
+    stompClient.connect({}, frame => {
+        console.log("Connected to room:", selectedRoom);
+
+        // Subscribe to room-specific queue
+        stompClient.subscribe("/queue/" + selectedRoom, message => {
+            const data = JSON.parse(message.body);
+            console.log("Room update:", data);
+            handleRoomUpdate(data);
+        });
+
+        // send join message
+        const joinMessage = {
+            playerName: playerName,
+            roomName: selectedRoom,
+            role: playerRole
+        };
+        stompClient.send("/app/join_room", {}, JSON.stringify(joinMessage));
+    });
+}
+
+function joinGame() {
+    playerName = document.getElementById('nameInput').value.trim();
+    if (!playerName) {
+        alert("Please enter a name.");
+        return;
+    }
+
+    connectToRoom();
+    initializeMap();
+
+    document.getElementById('join-section').style.display = 'none';
+}
+
+// ----- HANDLERS -----
+function handleRoomUpdate(data) {
+    updatePlayersList(data.players);
+    updateSpectatorsList(data.spectators);
+    gameStarted = data.gameStarted;
+    updateStatus();
+
+    // Update map ownership
+    if (data.claimedLands) {
+        const cells = document.querySelectorAll('.cell');
+        cells.forEach(cell => {
+            const idx = cell.dataset.index;
+            const ownerColor = data.claimedLands[idx];
+            if (ownerColor) {
+                cell.style.background = ownerColor;
+                cell.innerHTML = `<span>${ownerColor === playerColor ? 'YOU' : ''}</span>`;
+            } else {
+                cell.style.background = "linear-gradient(135deg, #1e2a3a 0%, #0f1923 100%)";
+                cell.innerHTML = `<span>${parseInt(idx)+1}</span>`;
+            }
+        });
+    }
+}
+
+
+
+function updatePlayersList(players) {
+    const playersDiv = document.getElementById('players');
+    playersDiv.innerHTML = "<strong>Players:</strong><br>";
+    for (const name in players) {
+        playersDiv.innerHTML += `${name} (${players[name]})<br>`;
+        if (name === playerName) playerColor = players[name];
+    }
+}
+
+function updateSpectatorsList(spectators) {
+    const playersDiv = document.getElementById('players');
+    if (spectators && spectators.length) {
+        playersDiv.innerHTML += "<br><strong>Spectators:</strong><br>";
+        spectators.forEach(s => playersDiv.innerHTML += s + "<br>");
+    }
+}
+
+function updateStatus() {
+    const statusDiv = document.getElementById('status');
+    if (!gameStarted) {
+        statusDiv.innerHTML = "Waiting for players...";
+        return;
+    }
+
+    statusDiv.innerHTML = playerRole === "spectator"
+        ? "Game Started! Enjoy watching."
+        : `Game Started! Your color: ${playerColor}`;
+
+    // Initialize map only once at game start
+    if (gameStarted && !document.querySelectorAll('.cell').length) {
+       // initializeMap();
+    }
+}
+
+
+    function initializeMap() {
+        const mapDiv = document.getElementById('map');
+        mapDiv.innerHTML = ''; // clear previous
+
+        for (let i = 0; i < 25; i++) { // 5x5 grid
+            const cell = document.createElement('div');
+            cell.className = 'cell';
+            cell.dataset.index = i;
+            cell.addEventListener('click', () => claimCell(i));
+            cell.innerHTML = `<span>${i + 1}</span>`; // optional cell number
+            mapDiv.appendChild(cell);
+        }
+    }
+
+
+    let currentCellIndex = null; // keep track of which cell the player clicked
+
+    function claimCell(index) {
+        if (!gameStarted) {
+            alert("The game hasn't started yet!");
+            return;
+        }
+
+        currentCellIndex = index;
+
+        // Show the puzzle panel
+        const puzzlePanel = document.getElementById('puzzle-panel');
+        puzzlePanel.style.display = 'block';
+
+        // Example: set a dummy puzzle for now
+        document.getElementById('puzzle-title').innerText = `Cell ${index + 1} Puzzle`;
+        document.getElementById('puzzle-question').innerText = "What is 2 + 2?";
+        document.getElementById('puzzle-answer').value = "";
+    }
+
+
+    function submitAnswer() {
+        const answer = document.getElementById('puzzle-answer').value.trim();
+        if (!answer) {
+            alert("Please enter an answer.");
+            return;
+        }
+
+        if (!stompClient || currentCellIndex === null) return;
+
+        // Send the answer to the backend
+        const answerMessage = {
+            playerName: playerName,
+            roomName: selectedRoom,
+            cellIndex: currentCellIndex,
+            answer: answer
+        };
+
+        stompClient.send("/app/submit_puzzle", {}, JSON.stringify(answerMessage));
+
+        // Hide puzzle panel for now until backend responds
+        document.getElementById('puzzle-panel').style.display = 'none';
+    }
+
+
+
+
 
 </script>
 </body>
