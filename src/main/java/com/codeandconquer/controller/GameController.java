@@ -78,7 +78,7 @@ public class GameController {
         Map<String, Object> response = new HashMap<>();
         Map<String, Map<String, String>> spectatorInfo = new HashMap<>();
 
-     /*   // Add all spectators to the response map
+     /*   // Add all spectators to the response map  2
         for (Spectator spectator : spectators.values()) {
             Map<String, String> info = new HashMap<>();
             info.put("name", spectator.getName());
