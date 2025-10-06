@@ -33,9 +33,12 @@ public class GameController {
         Map<String, Object> response = new HashMap<>();
         response.put("success", added);
         response.put("players", room.getPlayers());
-        response.put("gameStarted", room.getPlayers().size() == 2);
+        response.put("gameStarted", room.isGameStarted());
+        response.put("spectators", room.getSpectators());
+        response.put("claimedLands", room.getClaimedLands());
+        response.put("phase", room.getPhase());
 
-        // Send JSON update only to this room
+        // Notify everyone in the room
         messagingTemplate.convertAndSend("/queue/" + roomName, response);
     }
 
@@ -52,6 +55,10 @@ public class GameController {
 
         Map<String, Object> response = new HashMap<>();
         response.put("spectators", room.getSpectators());
+        response.put("players", room.getPlayers());
+        response.put("gameStarted", room.isGameStarted());
+        response.put("claimedLands", room.getClaimedLands());
+        response.put("phase", room.getPhase());
         response.put("message", spectName + " joined as a spectator.");
 
         messagingTemplate.convertAndSend("/queue/" + roomName, response);
@@ -67,6 +74,13 @@ public class GameController {
         GameRoom room = roomManager.getRoom(roomName);
         if (room == null) return;
 
+        if (!room.isGameStarted()) {
+            Map<String, Object> msg = new HashMap<>();
+            msg.put("error", "Game hasn't started yet!");
+            messagingTemplate.convertAndSend("/queue/" + roomName, msg);
+            return;
+        }
+
         String playerColor = room.getPlayers().get(playerName);
         if (playerColor == null) return; // Not a valid player
 
@@ -75,9 +89,11 @@ public class GameController {
         Map<String, Object> response = new HashMap<>();
         response.put("tileId", tileId);
         response.put("playerName", playerName);
+        response.put("playerColor", playerColor);
         response.put("success", success);
+        response.put("claimedLands", room.getClaimedLands());
 
-        // Send JSON update only to this room
+        // Send JSON update to everyone in room
         messagingTemplate.convertAndSend("/queue/" + roomName, response);
     }
 }
