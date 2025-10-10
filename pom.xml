@@ -12,11 +12,11 @@
   </parent>
 
   <groupId>com.codeandconquer</groupId>
-  <artifactId>codeandconquer</artifactId>
+  <artifactId>codeandconquer - v2</artifactId>
   <version>1.0-SNAPSHOT</version>
   <packaging>jar</packaging>
 
-  <name>codeandconquer</name>
+  <name>codeandconquer - v2</name>
 
   <properties>
     <java.version>17</java.version>
@@ -35,6 +35,8 @@
       <groupId>org.springframework.boot</groupId>
       <artifactId>spring-boot-starter-websocket</artifactId>
     </dependency>
+
+    
 
 
 

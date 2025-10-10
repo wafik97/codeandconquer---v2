@@ -10,10 +10,10 @@ import java.util.*;
 
         public RoomManager() {
             // Pre-create 4 fixed rooms
-            rooms.put("room1", new GameRoom("room1"));
-            rooms.put("room2", new GameRoom("room2"));
-            rooms.put("room3", new GameRoom("room3"));
-            rooms.put("room4", new GameRoom("room4"));
+            rooms.put("Room1", new GameRoom("Room1"));
+            rooms.put("Room2", new GameRoom("Room2"));
+            rooms.put("Room3", new GameRoom("Room3"));
+            rooms.put("Room4", new GameRoom("Room4"));
         }
 
         // Get a room by name

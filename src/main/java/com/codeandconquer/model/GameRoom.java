@@ -8,7 +8,7 @@ public class GameRoom {
     private final Map<String, String> players = new LinkedHashMap<>(); // name -> color
     private final List<String> colors = Arrays.asList("red", "blue");
     private final Set<String> spectators = new HashSet<>();
-    private final Map<Integer, String> claimedLands = new HashMap<>();
+    private final Map<Integer, String> claimedLands = new HashMap<>();// land -> color
 
     private String phase = "first";
     private boolean gameStarted = false;

@@ -313,12 +313,7 @@
     </div>
 </div>
 
-<div id="join-section" style="display: none;">
-    <label style="color: white;">Enter your name:</label>
-    <input type="text" id="nameInput">
-    <button onclick="joinGame()">Join Game</button>
 
-</div>
 
 <div id="status"></div>
 
@@ -344,9 +339,23 @@ let playerColor = "";
 let gameStarted = false;
 let rooms = ["Room1", "Room2", "Room3", "Room4"]; // example rooms
 let playersInRooms = {}; // { roomName: number of players }
+let connected = "first";
+
+
+
+// test area
+
+
+
+
+
 
 // ----- ROLE & ROOM SELECTION -----
+// keep
 window.onload = function() {
+
+    connectWebSocket();
+
     document.getElementById('roleModal').style.display = "block";
 
     document.getElementById('playerButton').addEventListener('click', function() {
@@ -362,8 +371,49 @@ window.onload = function() {
     });
 };
 
+
+function connectWebSocket() {
+    const socket = new SockJS('/game');
+    stompClient = Stomp.over(socket);
+
+    stompClient.connect({}, frame => {
+        if (connected === "first") {
+                connected = "connected";  // Set to true if false
+
+        }
+
+        if (connected === "lost") {
+           window.location.reload();  // Set to true if false
+
+        }
+
+        console.log("✅ Connected to WebSocket:", frame);
+
+        // You can listen to a general system topic if you want
+        stompClient.subscribe("/topic/system", message => {
+            console.log("System message:", message.body);
+        });
+
+
+    }, error => {
+        console.error("❌ WebSocket connection failed:", error);
+        const statusDiv = document.getElementById('status');
+        statusDiv.innerHTML = "Connection lost buddy...";
+         connected = "lost";
+        setTimeout(connectWebSocket, 3000); // Auto-reconnect
+    });
+
+
+}
+
+
+
+
+// keep 3
 const backButton = document.getElementById('backButton');
 
+
+// keep
 function showRoleSelection() {
     const modalContent = document.getElementById('roleModalContent');
     modalContent.innerHTML = `<h3>Choose your role</h3>
@@ -386,24 +436,35 @@ function showRoleSelection() {
 }
 
 
+// keep
 backButton.addEventListener('click', function() {
     showRoleSelection();
 });
 
 
+
+// keep 2
 function showRoomSelection() {
     const modalContent = document.getElementById('roleModalContent');
 
-    // Only replace the content for room select & join
-    modalContent.innerHTML = `<h3>Select a Room</h3>
+    // Build the inner modal HTML with room select + name input
+    modalContent.innerHTML = `
+        <h3>Select a Room</h3>
         <select id="roomSelect"></select>
         <br><br>
-        <button onclick="joinSelectedRoom()">Join Room</button>`;
+
+        <label for="playerName" style="color: white;">Enter your name:</label>
+        <input type="text" id="playerName" maxlength="10" placeholder="Your name..." style="margin-top: 8px;">
+        <br><br>
+
+        <button id="joinRoomButton" onclick="joinSelectedRoom()">Join Room</button>
+    `;
 
     // Show Back button and append it after the new content
     backButton.style.display = 'block';
     modalContent.appendChild(backButton);
 
+    // Populate the room list
     const roomSelect = document.getElementById('roomSelect');
     rooms.forEach(room => {
         let playerCount = playersInRooms[room] || 0;
@@ -417,114 +478,85 @@ function showRoomSelection() {
 }
 
 
+
     // show modal
     //   document.getElementById('roleModal').style.display = "block";
 
-
+// keep
 function joinSelectedRoom() {
     selectedRoom = document.getElementById('roomSelect').value;
     document.getElementById('roleModal').style.display = "none";
     document.getElementById('join-section').style.display = "block";
 }
 
+
+
+
 // ----- CONNECT & JOIN -----
-function connectToRoom() {
-    const socket = new SockJS('/game');
-    stompClient = Stomp.over(socket);
-    stompClient.connect({}, frame => {
-        console.log("Connected to room:", selectedRoom);
 
-        // Subscribe to room-specific queue
-        stompClient.subscribe("/queue/" + selectedRoom, message => {
-            const data = JSON.parse(message.body);
-            console.log("Room update:", data);
-            handleRoomUpdate(data);
-        });
 
-        // send join message
-        const joinMessage = {
-            playerName: playerName,
-            roomName: selectedRoom,
-            role: playerRole
-        };
-        stompClient.send("/app/join_room", {}, JSON.stringify(joinMessage));
-    });
-}
+// half keep
+<!--function connectToRoom() {-->
+<!--    const socket = new SockJS('/game');-->
+<!--    stompClient = Stomp.over(socket);-->
+<!--    stompClient.connect({}, frame => {-->
+<!--        console.log("Connected to room:", selectedRoom);-->
 
-function joinGame() {
-    playerName = document.getElementById('nameInput').value.trim();
-    if (!playerName) {
-        alert("Please enter a name.");
-        return;
-    }
+<!--        // Subscribe to room-specific queue-->
+<!--        stompClient.subscribe("/queue/" + selectedRoom, message => {-->
+<!--            const data = JSON.parse(message.body);-->
+<!--            console.log("Room update:", data);-->
+<!--            handleRoomUpdate(data);-->
+<!--        });-->
 
-    connectToRoom();
-    initializeMap();
+<!--        // send join message-->
+<!--        const joinMessage = {-->
+<!--            playerName: playerName,-->
+<!--            roomName: selectedRoom,-->
+<!--            role: playerRole-->
+<!--        };-->
+<!--        stompClient.send("/app/join_room", {}, JSON.stringify(joinMessage));-->
+<!--    });-->
+<!--}-->
 
-    document.getElementById('join-section').style.display = 'none';
-}
-
-// ----- HANDLERS -----
-function handleRoomUpdate(data) {
-    updatePlayersList(data.players);
-    updateSpectatorsList(data.spectators);
-    gameStarted = data.gameStarted;
+function joinSelectedRoom() {
     updateStatus();
+    const selectedRoom = document.getElementById('roomSelect').value;
+    const playerName = document.getElementById('playerName').value.trim();
 
-    // Update map ownership
-    if (data.claimedLands) {
-        const cells = document.querySelectorAll('.cell');
-        cells.forEach(cell => {
-            const idx = cell.dataset.index;
-            const ownerColor = data.claimedLands[idx];
-            if (ownerColor) {
-                cell.style.background = ownerColor;
-                cell.innerHTML = `<span>${ownerColor === playerColor ? 'YOU' : ''}</span>`;
-            } else {
-                cell.style.background = "linear-gradient(135deg, #1e2a3a 0%, #0f1923 100%)";
-                cell.innerHTML = `<span>${parseInt(idx)+1}</span>`;
-            }
-        });
-    }
-}
-
-
-
-function updatePlayersList(players) {
-    const playersDiv = document.getElementById('players');
-    playersDiv.innerHTML = "<strong>Players:</strong><br>";
-    for (const name in players) {
-        playersDiv.innerHTML += `${name} (${players[name]})<br>`;
-        if (name === playerName) playerColor = players[name];
-    }
-}
-
-function updateSpectatorsList(spectators) {
-    const playersDiv = document.getElementById('players');
-    if (spectators && spectators.length) {
-        playersDiv.innerHTML += "<br><strong>Spectators:</strong><br>";
-        spectators.forEach(s => playersDiv.innerHTML += s + "<br>");
-    }
-}
-
-function updateStatus() {
-    const statusDiv = document.getElementById('status');
-    if (!gameStarted) {
-        statusDiv.innerHTML = "Waiting for players...";
+    if (!playerName) {
+        alert("Please enter a name before joining!");
         return;
     }
 
-    statusDiv.innerHTML = playerRole === "spectator"
-        ? "Game Started! Enjoy watching."
-        : `Game Started! Your color: ${playerColor}`;
-
-    // Initialize map only once at game start
-    if (gameStarted && !document.querySelectorAll('.cell').length) {
-       // initializeMap();
+    if (!stompClient || !stompClient.connected) {
+        alert("WebSocket not connected yet. Please wait a moment.");
+        return;
     }
+
+    // Hide modal after join
+    document.getElementById('roleModal').style.display = "none";
+
+    // Send join info to backend
+    const joinMessage = {
+        roomName: selectedRoom,
+        playerName: playerName,
+        role: playerRole
+    };
+
+    initializeMap();
+    stompClient.send("/app/join_room", {}, JSON.stringify(joinMessage));
+    console.log("📤 Sent join request:", joinMessage);
 }
 
 
+
+
+
+
+
+
+// keep
     function initializeMap() {
         const mapDiv = document.getElementById('map');
         mapDiv.innerHTML = ''; // clear previous
@@ -540,49 +572,35 @@ function updateStatus() {
     }
 
 
-    let currentCellIndex = null; // keep track of which cell the player clicked
 
-    function claimCell(index) {
-        if (!gameStarted) {
-            alert("The game hasn't started yet!");
-            return;
+    function updateStatus() {
+        const statusDiv = document.getElementById('status');
+
+        if (gameStarted === false) {
+            if (playerRole === 'spectator') {
+                statusDiv.innerHTML = "Waiting for the players to join...";
+            } else if (playerRole === 'player') {
+                statusDiv.innerHTML = `Welcome ${playerName}, waiting for the other player to join...`;
+            }
+        } else if (gameStarted === true) {
+            if (playerRole === 'spectator') {
+                statusDiv.innerHTML = "Game Started! Enjoy watching!!";
+            } else if (playerRole === 'player') {
+                statusDiv.innerHTML = `Game Started! Your color: ${playerColor}`;
+            }
         }
-
-        currentCellIndex = index;
-
-        // Show the puzzle panel
-        const puzzlePanel = document.getElementById('puzzle-panel');
-        puzzlePanel.style.display = 'block';
-
-        // Example: set a dummy puzzle for now
-        document.getElementById('puzzle-title').innerText = `Cell ${index + 1} Puzzle`;
-        document.getElementById('puzzle-question').innerText = "What is 2 + 2?";
-        document.getElementById('puzzle-answer').value = "";
     }
 
 
-    function submitAnswer() {
-        const answer = document.getElementById('puzzle-answer').value.trim();
-        if (!answer) {
-            alert("Please enter an answer.");
-            return;
-        }
+    // need to be updated
+    socket.onmessage = function (event) {
 
-        if (!stompClient || currentCellIndex === null) return;
+        updateStatus();
+    };
 
-        // Send the answer to the backend
-        const answerMessage = {
-            playerName: playerName,
-            roomName: selectedRoom,
-            cellIndex: currentCellIndex,
-            answer: answer
-        };
 
-        stompClient.send("/app/submit_puzzle", {}, JSON.stringify(answerMessage));
 
-        // Hide puzzle panel for now until backend responds
-        document.getElementById('puzzle-panel').style.display = 'none';
-    }
+
 
 
 
