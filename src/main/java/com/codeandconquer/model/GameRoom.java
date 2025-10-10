@@ -32,6 +32,16 @@ public class GameRoom {
         return true;
     }
 
+    public synchronized int checkPlayer(String playerName) {
+        if (players.size() >= 2 ){
+            return 1;
+        }else if (players.containsKey(playerName)){
+            return 2;
+        }
+
+        return 3;
+    }
+
     public synchronized boolean addSpectator(String spectatorName) {
         return spectators.add(spectatorName);
     }

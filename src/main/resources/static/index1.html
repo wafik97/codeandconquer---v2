@@ -1,32 +1,142 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>Code and Conquer Test</title>
-    <script src="https://cdn.jsdelivr.net/npm/sockjs-client@1/dist/sockjs.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/stompjs@2.3.3/lib/stomp.min.js"></script>
+    <meta charset="UTF-8">
+    <title>Code & Conquer</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 30px; }
+        #rooms button { margin: 5px; padding: 10px 20px; }
+        #game-board { display: grid; grid-template-columns: repeat(5, 50px); gap: 5px; margin-top: 20px; }
+        .cell { width: 50px; height: 50px; border: 1px solid #aaa; display: flex; align-items: center; justify-content: center; cursor: pointer; }
+        .cell.red { background-color: #ffcccc; }
+        .cell.blue { background-color: #ccccff; }
+        #status { margin-top: 20px; font-weight: bold; }
+    </style>
 </head>
 <body>
-<h1>Code and Conquer WebSocket Test</h1>
-<input type="text" id="message" placeholder="Type a message">
-<button onclick="sendMessage()">Send</button>
-<ul id="messages"></ul>
+<h1>Code & Conquer</h1>
+
+<div id="rooms">
+    <h3>Select a Room:</h3>
+    <button onclick="joinSelectedRoom('Room1')">Room 1</button>
+    <button onclick="joinSelectedRoom('Room2')">Room 2</button>
+    <button onclick="joinSelectedRoom('Room3')">Room 3</button>
+    <button onclick="joinSelectedRoom('Room4')">Room 4</button>
+</div>
+
+<div id="status">Status: Not connected</div>
+
+<div id="game-board"></div>
 
 <script>
-    const socket = new SockJS('/game');
-    const stompClient = Stomp.over(socket);
+    let socket = null;
+    let playerName = null;
+    let role = null;
+    let roomName = null;
+    let connected = "first";
 
-    stompClient.connect({}, () => {
-        stompClient.subscribe('/topic/game', (msg) => {
-            const li = document.createElement('li');
-            li.innerText = msg.body;
-            document.getElementById('messages').appendChild(li);
-        });
-    });
+    // 🧠 Connect to backend WebSocket
+    function connectWebSocket() {
+        const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+        const host = window.location.host;
+        socket = new WebSocket(`${protocol}//${host}/game`);
 
-    function sendMessage() {
-        const message = document.getElementById('message').value;
-        stompClient.send("/app/select", {}, message);
+        socket.onopen = () => {
+            console.log("✅ Connected to WebSocket");
+            document.getElementById("status").textContent = "Status: Connected";
+            if (connected === "lost") window.location.reload();
+            connected = "connected";
+        };
+
+        socket.onmessage = (event) => {
+            const data = JSON.parse(event.data);
+            console.log("📩 Received:", data);
+            handleServerMessage(data);
+        };
+
+        socket.onclose = () => {
+            console.warn("❌ Disconnected. Reconnecting in 3s...");
+            document.getElementById("status").textContent = "Status: Disconnected";
+            connected = "lost";
+            setTimeout(connectWebSocket, 3000);
+        };
+
+        socket.onerror = (err) => console.error("WebSocket error:", err);
     }
+
+    function joinSelectedRoom(selectedRoom) {
+        if (!socket || socket.readyState !== WebSocket.OPEN) {
+            alert("WebSocket not connected yet!");
+            return;
+        }
+
+        playerName = prompt("Enter your name:");
+        if (!playerName) return;
+
+        const asSpectator = confirm("Join as spectator?");
+        role = asSpectator ? "spectator" : "player";
+        roomName = selectedRoom;
+
+        const joinMessage = {
+            type: "join_room",
+            playerName,
+            roomName,
+            role
+        };
+
+        socket.send(JSON.stringify(joinMessage));
+    }
+
+    function handleServerMessage(data) {
+        if (data.type === "room_update") {
+            const players = data.players ? Object.entries(data.players).map(([n, c]) => `${n} (${c})`).join(", ") : "None";
+            const spectators = data.spectators ? Array.from(data.spectators).join(", ") : "None";
+            document.getElementById("status").textContent = `Room: ${roomName} | Players: ${players} | Spectators: ${spectators}`;
+            renderBoard(data.claimedLands);
+        }
+
+        if (data.type === "tile_update") {
+            updateTile(data.tileId, data.playerColor);
+        }
+    }
+
+    function renderBoard(claimedLands = {}) {
+        const board = document.getElementById("game-board");
+        board.innerHTML = "";
+        for (let i = 0; i < 25; i++) {
+            const cell = document.createElement("div");
+            cell.classList.add("cell");
+            const color = claimedLands[i];
+            if (color) cell.classList.add(color);
+            cell.textContent = i;
+            cell.onclick = () => selectTile(i);
+            board.appendChild(cell);
+        }
+    }
+
+    function selectTile(tileId) {
+        if (role === "spectator") return; // spectators can't claim tiles
+        if (!socket || socket.readyState !== WebSocket.OPEN) return;
+
+        const msg = {
+            type: "select",
+            playerName,
+            roomName,
+            tileId
+        };
+        socket.send(JSON.stringify(msg));
+    }
+
+    function updateTile(tileId, color) {
+        const cells = document.querySelectorAll(".cell");
+        const cell = cells[tileId];
+        if (cell) {
+            cell.classList.add(color);
+        }
+    }
+
+    // auto-connect on load
+    connectWebSocket();
 </script>
 </body>
 </html>

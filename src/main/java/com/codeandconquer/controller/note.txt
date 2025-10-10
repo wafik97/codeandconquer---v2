@@ -1,0 +1,116 @@
+
+F->B
+
+SEND
+socket.send(JSON.stringify({
+  type: "join_room",
+  roomName: "Room1",
+  playerName: "Alice"
+}));
+
+receive
+@Override
+public void handleTextMessage(WebSocketSession session, TextMessage message) throws Exception {
+    Map<String, Object> data = mapper.readValue(message.getPayload(), Map.class);
+    System.out.println("From front: " + data);
+}
+
+
+B->F
+
+SEND
+Map<String, Object> msg = Map.of(
+    "type", "player_info",
+    "name", "Alice",
+    "score", 120,
+    "color", "blue"
+);
+session.sendMessage(new TextMessage(mapper.writeValueAsString(msg)));
+
+receive
+socket.onmessage = (event) => {
+  const data = JSON.parse(event.data);
+    console.log(data.name);     // "Alice"
+    console.log(data.score);    // 120
+    console.log(data.color);    // "blue"
+
+    // or use destructuring:
+    const { name, score, color } = data;
+    console.log(`${name} has ${score} points and color ${color}`);
+  };
+
+
+
+
+private void handleCheck(WebSocketSession session, Map<String, Object> msg) throws Exception {
+        String roomName = (String) msg.get("roomName");
+        String playerName = (String) msg.get("playerName");
+
+
+        int check = roomManager.getRoom(roomName).checkPlayer(playerName);
+
+        if(check==1){
+            Map<String, Object> my_msg = Map.of(
+                    "type", "check_result",
+                    "status", "full"
+            );
+            session.sendMessage(new TextMessage(mapper.writeValueAsString(my_msg)));
+        }else if(check==2){
+            Map<String, Object> my_msg = Map.of(
+                    "type", "check_result",
+                    "status", "already"
+            );
+            session.sendMessage(new TextMessage(mapper.writeValueAsString(my_msg)));
+        }else if (check==3){
+            Map<String, Object> my_msg = Map.of(
+                    "type", "check_result",
+                    "status", "safe"
+            );
+            session.sendMessage(new TextMessage(mapper.writeValueAsString(my_msg)));
+        }
+
+
+    }
+
+
+    socket.onmessage = (event) => {
+            const data = JSON.parse(event.data);
+
+
+            if (data.type === "check_result") {
+
+                console.log(data.type);
+                console.log(data.status);
+
+                switch (data.status) {
+                    case 'full':
+                           alert("The room is full!");
+                           return;
+                        break;
+                    case 'already':
+                         alert("The name already exists!");
+                           return;
+                        break;
+                    case 'safe':
+                            // Hide modal after join
+                            document.getElementById('roleModal').style.display = "none";
+
+                            // Send join info to backend (native WebSocket)
+                            const joinMessage = {
+                                roomName: selectedRoom,
+                                playerName: playerName,
+                                role: playerRole
+                            };
+
+                            initializeMap();
+
+                            // attach a `type` so server knows this is a join request
+                            socket.send(JSON.stringify(Object.assign({type: "join_room"}, joinMessage)));
+                            console.log("📤 Sent join request:", joinMessage);
+                            updateStatus();
+                        break;
+                    default:
+                        console.log('Unknown status');
+                }
+            }
+        };
