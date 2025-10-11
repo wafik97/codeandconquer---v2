@@ -495,7 +495,7 @@ function claimCell(i) {
         smartIndent: true,          // Enable smart indentation
         tabSize: 4,                 // Tab size
         matchBrackets: true,        // Highlight matching brackets
-        autoCloseBrackets: true,    // Auto-close brackets
+        autoCloseBrackets: true,    // Auto-close brackets s
         extraKeys: { "Ctrl-Space": "autocomplete" },
     });
 
