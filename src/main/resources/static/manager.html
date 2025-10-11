@@ -380,10 +380,10 @@
         <div class="section">
             <label for="room">Select Room</label>
             <select id="room">
-                <option value="room1">Room 1</option>
-                <option value="room2">Room 2</option>
-                <option value="room3">Room 3</option>
-                <option value="room4">Room 4</option>
+                <option value="Room1">Room 1</option>
+                <option value="Room2">Room 2</option>
+                <option value="Room3">Room 3</option>
+                <option value="Room4">Room 4</option>
             </select>
         </div>
 
@@ -404,7 +404,7 @@
             <div class="player-row">
                 <div class="player-info">
                     <span class="player-label">Player 1:</span>
-                    <span class="player-name">John Smith</span>
+                    <span class="player-name"></span>
                 </div>
                 <button class="btn-remove">
                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -417,7 +417,7 @@
             <div class="player-row">
                 <div class="player-info">
                     <span class="player-label">Player 2:</span>
-                    <span class="player-name">Sarah Johnson</span>
+                    <span class="player-name"></span>
                 </div>
                 <button class="btn-remove">
                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -506,29 +506,137 @@
 </div>
 
 <script>
-    function handleLogin(event) {
-        event.preventDefault();
-        const password = document.getElementById('password').value;
-        const error = document.getElementById('error');
 
-        if (password === '444') {
-            document.getElementById('loginContainer').style.display = 'none';
-            document.getElementById('managerContainer').classList.add('active');
-            error.style.display = 'none';
-        } else {
-            error.style.display = 'block';
+    let selectedRoom = 'Room1';
+    let connected = "first";
+
+
+
+
+
+        function connectWebSocket() {
+            const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+            const host = window.location.host;
+            socket = new WebSocket(`${protocol}//${host}/game`);
+
+
+
+            socket.onopen = () => {
+
+                socket.send(JSON.stringify({
+                  type: "join_manager",
+
+                }));
+
+
+                if (connected === "first") {
+                    connected = "connected";
+                }
+                if (connected === "lost") {
+                    window.location.reload();
+                }
+                console.log("✅ Connected to WebSocket");
+            };
+
+            socket.onmessage = (event) => {
+                try {
+                    const data = JSON.parse(event.data);
+                    console.log("📩 Received:", data);
+                    handleServerMessage(data);
+
+                } catch (e) {
+                    console.error("Invalid message from server:", event.data);
+                }
+            };
+
+            socket.onclose = (ev) => {
+                console.error("❌ WebSocket closed:", ev);
+
+                connected = "lost";
+                setTimeout(connectWebSocket, 3000); // Auto-reconnect
+            };
+
+            socket.onerror = (error) => {
+                console.error("WebSocket error:", error);
+            };
         }
 
-        return false;
-    }
+        function handleServerMessage(data) {
+            // If server sends an error object
+            if (data.error) {
+                console.error("Server error:", data.error);
+                return;
+            }
 
-    function resetGame() {
-       // document.getElementById('gameStatus').textContent = "Didn't start";
-    }
+            if (data.type === "first_login") {
 
-    function finishGame() {
-       // document.getElementById('gameStatus').textContent = "Finished";
-    }
+                updatePlayers(data.players);
+                updateClaimedLands(data.claimedLands);
+
+
+            }
+        }
+
+        function updatePlayers(players) {
+            const playerNames = Object.keys(players);
+            const playerElements = document.querySelectorAll('.player-name');
+
+            // Clear existing names first
+            playerElements.forEach(el => el.textContent = '');
+
+            // Fill up to 2 players
+            playerNames.forEach((name, index) => {
+                if (playerElements[index]) {
+                    playerElements[index].textContent = name;
+                }
+            });
+        }
+
+        function updateClaimedLands(claimedLands) {
+            const boxes = document.querySelectorAll('.grid-box');
+            boxes.forEach((box, index) => {
+                const color = claimedLands[index]; // backend uses 0–24 as keys
+                if (color === 'red') {
+                    box.style.background = 'red';
+                    box.style.color = 'white';
+                } else if (color === 'blue') {
+                    box.style.background = 'blue';
+                    box.style.color = 'white';
+                } else {
+                    box.style.background = '#e2e8f0';
+                    box.style.color = '#475569';
+                }
+            });
+        }
+
+
+
+
+
+        function handleLogin(event) {
+            event.preventDefault();
+            const password = document.getElementById('password').value;
+            const error = document.getElementById('error');
+
+            if (password === '444') {
+                connectWebSocket();
+                document.getElementById('loginContainer').style.display = 'none';
+                document.getElementById('managerContainer').classList.add('active');
+                error.style.display = 'none';
+            } else {
+                error.style.display = 'block';
+            }
+
+            return false;
+        }
+
+        function resetGame() {
+           // document.getElementById('gameStatus').textContent = "Didn't start";
+        }
+
+        function finishGame() {
+           // document.getElementById('gameStatus').textContent = "Finished";
+        }
 </script>
 </body>
 </html>

@@ -8,297 +8,426 @@
     <!-- REMOVED: sockjs + stomp script tags (we use native WebSocket now) -->
 
     <style>
+        /* ===== BODY ===== */
         body {
-            font-family: 'Courier New', monospace;
-            padding: 10px;
-            text-align: center;
-            background: linear-gradient(135deg, #0a0e27 0%, #1a1f3a 50%, #0f1419 100%);
-            min-height: 100vh;
-            margin: 0;
-            position: relative;
-            overflow-x: hidden;
+          font-family: 'Courier New', monospace;
+          padding: 10px;
+          text-align: center;
+          background: linear-gradient(135deg, #0a0e27 0%, #1a1f3a 50%, #0f1419 100%);
+          min-height: 100vh;
+          margin: 0;
+          position: relative;
+          overflow-x: hidden;
         }
 
         body::before {
-            content: '';
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-image:
-                repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0, 255, 150, 0.03) 2px, rgba(0, 255, 150, 0.03) 4px),
-                repeating-linear-gradient(90deg, transparent, transparent 2px, rgba(0, 255, 150, 0.03) 2px, rgba(0, 255, 150, 0.03) 4px);
-            pointer-events: none;
-            z-index: 0;
+          content: '';
+          position: fixed;
+          top: 0;
+          left: 0;
+          width: 100%;
+          height: 100%;
+          background-image:
+            repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0, 255, 150, 0.03) 2px, rgba(0, 255, 150, 0.03) 4px),
+            repeating-linear-gradient(90deg, transparent, transparent 2px, rgba(0, 255, 150, 0.03) 2px, rgba(0, 255, 150, 0.03) 4px);
+          pointer-events: none;
+          z-index: 0;
         }
 
-        #map {
-            display: grid;
-            grid-template-columns: repeat(5, 1fr);
-            grid-gap: 2px;
-            margin-top: 20px;
-            max-width: 650px;
-            margin-left: auto;
-            margin-right: auto;
-            padding: 25px;
-            background: linear-gradient(145deg, #1a1f3a 0%, #0d1117 100%);
-            border: 2px solid #00ff88;
-            border-radius: 8px;
-            box-shadow:
-                0 0 30px rgba(0, 255, 136, 0.3),
-                inset 0 0 20px rgba(0, 255, 136, 0.05);
-            position: relative;
-            z-index: 1;
-        }
-
-        #map::before {
-            content: '< TERRITORY />';
-            position: absolute;
-            top: -10px;
-            left: 20px;
-            background: #0d1117;
-            padding: 0 10px;
-            color: #00ff88;
-            font-size: 12px;
-            font-weight: bold;
-            letter-spacing: 2px;
-        }
-
-        .cell {
-            aspect-ratio: 1 / 1;
-            width: 95%;
-            border: 2px solid #00ff88;
-            position: relative;
-            cursor: pointer;
-            background: linear-gradient(135deg, #1e2a3a 0%, #0f1923 100%);
-            user-select: none;
-            touch-action: manipulation;
-            transition: all 0.3s ease;
-            overflow: hidden;
-        }
-
-        .cell::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: -100%;
-            width: 100%;
-            height: 100%;
-            background: linear-gradient(90deg, transparent, rgba(0, 255, 136, 0.3), transparent);
-            transition: left 0.5s;
-        }
-
-        .cell:hover::before {
-            left: 100%;
-        }
-
-        .cell:hover {
-            border-color: #00ffff;
-            box-shadow:
-                0 0 20px rgba(0, 255, 255, 0.5),
-                inset 0 0 20px rgba(0, 255, 255, 0.1);
-            transform: scale(1.02);
-            z-index: 10;
-        }
-
-        .cell::after {
-            content: '';
-            position: absolute;
-            top: 5px;
-            left: 5px;
-            right: 5px;
-            bottom: 5px;
-            border: 1px solid rgba(0, 255, 136, 0.2);
-            pointer-events: none;
-        }
-
-        #roleModal {
-            display: none;
-            position: fixed;
-            z-index: 1000;
-            left: 0;
-            top: 0;
-            width: 100%;
-            height: 100%;
-            overflow: auto;
-            background-color: rgba(10, 14, 39, 0.95);
-            backdrop-filter: blur(5px);
-            padding-top: 60px;
-            animation: fadeIn 0.3s ease;
-        }
-
-        @keyframes fadeIn {
-            from { opacity: 0; }
-            to { opacity: 1; }
-        }
-
-        @keyframes fadeOut {
-            from { opacity: 1; }
-            to { opacity: 0; }
-        }
-
-        #roleModal.closing {
-            animation: fadeOut 0.3s ease;
-        }
-
-        #roleModalContent {
-            background: linear-gradient(145deg, #1a1f3a 0%, #0d1117 100%);
-            margin: 10% auto;
-            padding: 40px;
-            border: 2px solid #00ff88;
-            width: 350px;
-            text-align: center;
-            border-radius: 8px;
-            box-shadow: 0 0 40px rgba(0, 255, 136, 0.4);
-            animation: slideDown 0.4s ease;
-        }
-
-        @keyframes slideDown {
-            from {
-                transform: translateY(-50px);
-                opacity: 0;
-            }
-            to {
-                transform: translateY(0);
-                opacity: 1;
-            }
-        }
-
-        #roleModalContent h3 {
-            color: #00ffff;
-            text-shadow: 0 0 15px rgba(0, 255, 255, 0.8);
-            font-family: 'Courier New', monospace;
-            letter-spacing: 2px;
-            margin-bottom: 25px;
-        }
-
-        #roleModalContent button {
-            width: 100%;
-            margin: 10px 0;
-        }
-
-        .cell span {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            font-weight: bold;
-            font-size: 16px;
-            color: #00ff88;
-            text-shadow: 0 0 10px rgba(0, 255, 136, 0.8);
-            z-index: 1;
-            font-family: 'Courier New', monospace;
-        }
-
-        #players {
-            margin-top: 20px;
-            font-size: 16px;
-            background: linear-gradient(145deg, #1a1f3a 0%, #0d1117 100%);
-            padding: 15px;
-            border-radius: 8px;
-            max-width: 400px;
-            margin-left: auto;
-            margin-right: auto;
-            box-shadow: 0 0 20px rgba(0, 255, 136, 0.2);
-            border: 1px solid #00ff88;
-            color: #00ff88;
-            z-index: 1;
-            position: relative;
-        }
-
-        #status {
-            margin-top: 10px;
-            font-weight: bold;
-            background: linear-gradient(145deg, #1a1f3a 0%, #0d1117 100%);
-            padding: 10px;
-            border-radius: 8px;
-            max-width: 400px;
-            margin-left: auto;
-            margin-right: auto;
-            box-shadow: 0 0 20px rgba(0, 255, 136, 0.2);
-            border: 1px solid #00ff88;
-            color: #00ffff;
-            z-index: 1;
-            position: relative;
-        }
-
-        #puzzle-panel {
-            display: none;
-            margin-top: 20px;
-            padding: 20px;
-            border: 2px solid #00ff88;
-            background: linear-gradient(145deg, #1a1f3a 0%, #0d1117 100%);
-            max-width: 300px;
-            margin-left: auto;
-            margin-right: auto;
-            border-radius: 8px;
-            box-shadow: 0 0 30px rgba(0, 255, 136, 0.4);
-            color: #00ff88;
-            z-index: 1;
-            position: relative;
-        }
-
-        #puzzle-panel h3 {
-            color: #00ffff;
-            text-shadow: 0 0 10px rgba(0, 255, 255, 0.6);
-        }
-
-        input, button {
-            padding: 10px;
-            font-size: 16px;
-            margin-top: 10px;
-            border-radius: 5px;
-            font-family: 'Courier New', monospace;
-        }
-
-        input {
-            background: #0d1117;
-            border: 1px solid #00ff88;
-            color: #00ff88;
-        }
-
-        input:focus {
-            outline: none;
-            box-shadow: 0 0 10px rgba(0, 255, 136, 0.5);
-        }
-
-        button {
-            background: linear-gradient(135deg, #00ff88 0%, #00cc70 100%);
-            color: #0d1117;
-            border: none;
-            cursor: pointer;
-            transition: all 0.3s;
-            font-weight: bold;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-        }
-
-        button:hover {
-            background: linear-gradient(135deg, #00ffff 0%, #00cccc 100%);
-            box-shadow: 0 0 20px rgba(0, 255, 255, 0.6);
-            transform: translateY(-2px);
-        }
-
+        /* ===== HEADINGS ===== */
         h1 {
-            color: #00ff88;
-            text-shadow: 0 0 20px rgba(0, 255, 136, 0.8);
-            font-family: 'Courier New', monospace;
-            letter-spacing: 3px;
-            z-index: 1;
-            position: relative;
+          color: #00ff88;
+          text-shadow: 0 0 20px rgba(0, 255, 136, 0.8);
+          font-family: 'Courier New', monospace;
+          letter-spacing: 3px;
+          z-index: 1;
+          position: relative;
         }
 
         h1::before {
-            content: '{ ';
-            color: #00ffff;
+          content: '{ ';
+          color: #00ffff;
         }
 
         h1::after {
-            content: ' }';
-            color: #00ffff;
+          content: ' }';
+          color: #00ffff;
+        }
+
+        /* ===== MAP & CELLS ===== */
+        #map {
+          display: grid;
+          grid-template-columns: repeat(5, 1fr);
+          grid-gap: 2px;
+          margin-top: 20px;
+          max-width: 650px;
+          margin-left: auto;
+          margin-right: auto;
+          padding: 25px;
+          background: linear-gradient(145deg, #1a1f3a 0%, #0d1117 100%);
+          border: 2px solid #00ff88;
+          border-radius: 8px;
+          box-shadow: 0 0 30px rgba(0, 255, 136, 0.3), inset 0 0 20px rgba(0, 255, 136, 0.05);
+          position: relative;
+          z-index: 1;
+        }
+
+        #map::before {
+          content: '< TERRITORY />';
+          position: absolute;
+          top: -10px;
+          left: 20px;
+          background: #0d1117;
+          padding: 0 10px;
+          color: #00ff88;
+          font-size: 12px;
+          font-weight: bold;
+          letter-spacing: 2px;
+        }
+
+        .cell {
+          aspect-ratio: 1 / 1;
+          width: 95%;
+          border: 2px solid #00ff88;
+          position: relative;
+          cursor: pointer;
+          background: linear-gradient(135deg, #1e2a3a 0%, #0f1923 100%);
+          user-select: none;
+          touch-action: manipulation;
+          transition: all 0.3s ease;
+          overflow: hidden;
+        }
+
+        .cell::before {
+          content: '';
+          position: absolute;
+          top: 0;
+          left: -100%;
+          width: 100%;
+          height: 100%;
+          background: linear-gradient(90deg, transparent, rgba(0, 255, 136, 0.3), transparent);
+          transition: left 0.5s;
+        }
+
+        .cell:hover::before {
+          left: 100%;
+        }
+
+        .cell:hover {
+          border-color: #00ffff;
+          box-shadow: 0 0 20px rgba(0, 255, 255, 0.5), inset 0 0 20px rgba(0, 255, 255, 0.1);
+          transform: scale(1.02);
+          z-index: 10;
+        }
+
+        .cell::after {
+          content: '';
+          position: absolute;
+          top: 5px;
+          left: 5px;
+          right: 5px;
+          bottom: 5px;
+          border: 1px solid rgba(0, 255, 136, 0.2);
+          pointer-events: none;
+        }
+
+        .cell span {
+          position: absolute;
+          top: 50%;
+          left: 50%;
+          transform: translate(-50%, -50%);
+          font-weight: bold;
+          font-size: 16px;
+          color: #00ff88;
+          text-shadow: 0 0 10px rgba(0, 255, 136, 0.8);
+          z-index: 1;
+          font-family: 'Courier New', monospace;
+        }
+
+        /* ===== BUTTONS ===== */
+        .buttons-container {
+          display: flex;
+          gap: 30px;
+          z-index: 1;
+          position: relative;
+        }
+
+        button {
+          padding: 10px;
+          font-size: 16px;
+          margin-top: 10px;
+          border-radius: 5px;
+          font-family: 'Courier New', monospace;
+          background: linear-gradient(135deg, #00ff88 0%, #00cc70 100%);
+          color: #0d1117;
+          border: none;
+          cursor: pointer;
+          transition: all 0.3s;
+          font-weight: bold;
+          text-transform: uppercase;
+          letter-spacing: 1px;
+        }
+
+        button:hover {
+          background: linear-gradient(135deg, #00ffff 0%, #00cccc 100%);
+          box-shadow: 0 0 20px rgba(0, 255, 255, 0.6);
+          transform: translateY(-2px);
+        }
+
+        /* ===== INPUTS ===== */
+        input {
+          background: #0d1117;
+          border: 1px solid #00ff88;
+          color: #00ff88;
+        }
+
+        input:focus {
+          outline: none;
+          box-shadow: 0 0 10px rgba(0, 255, 136, 0.5);
+        }
+
+        /* ===== MODALS ===== */
+        .modal {
+          display: none;
+          position: fixed;
+          z-index: 1000;
+          left: 0;
+          top: 0;
+          width: 100%;
+          height: 100%;
+          overflow: auto;
+          background-color: rgba(10, 14, 39, 0.95);
+          backdrop-filter: blur(5px);
+          padding-top: 60px;
+          animation: fadeIn 0.3s ease;
+        }
+
+        .modal.closing {
+          animation: fadeOut 0.3s ease;
+        }
+
+        .modal-content {
+          background: linear-gradient(145deg, #1a1f3a 0%, #0d1117 100%);
+          margin: 10% auto;
+          padding: 40px;
+          border: 2px solid #00ff88;
+          width: 350px;
+          text-align: center;
+          border-radius: 8px;
+          box-shadow: 0 0 40px rgba(0, 255, 136, 0.4);
+          animation: slideDown 0.4s ease;
+          position: relative;
+        }
+
+        .modal-content h3 {
+          color: #00ffff;
+          text-shadow: 0 0 15px rgba(0, 255, 255, 0.8);
+          font-family: 'Courier New', monospace;
+          letter-spacing: 2px;
+          margin-bottom: 25px;
+        }
+
+        .modal-content button {
+          width: 100%;
+          margin: 10px 0;
+        }
+
+        #roleModal {
+          display: none;
+          position: fixed;
+          z-index: 1000;
+          left: 0;
+          top: 0;
+          width: 100%;
+          height: 100%;
+          overflow: auto;
+          background-color: rgba(10, 14, 39, 0.95);
+          backdrop-filter: blur(5px);
+          padding-top: 60px;
+          animation: fadeIn 0.3s ease;
+        }
+
+        #roleModal.closing {
+          animation: fadeOut 0.3s ease;
+        }
+
+        #roleModalContent {
+          background: linear-gradient(145deg, #1a1f3a 0%, #0d1117 100%);
+          margin: 10% auto;
+          padding: 40px;
+          border: 2px solid #00ff88;
+          width: 350px;
+          text-align: center;
+          border-radius: 8px;
+          box-shadow: 0 0 40px rgba(0, 255, 136, 0.4);
+          animation: slideDown 0.4s ease;
+        }
+
+        #roleModalContent h3 {
+          color: #00ffff;
+          text-shadow: 0 0 15px rgba(0, 255, 255, 0.8);
+          font-family: 'Courier New', monospace;
+          letter-spacing: 2px;
+          margin-bottom: 25px;
+        }
+
+        #roleModalContent button {
+          width: 100%;
+          margin: 10px 0;
+        }
+
+        /* ===== OTHER UI ===== */
+        #players {
+          margin-top: 20px;
+          font-size: 16px;
+          background: linear-gradient(145deg, #1a1f3a 0%, #0d1117 100%);
+          padding: 15px;
+          border-radius: 8px;
+          max-width: 400px;
+          margin-left: auto;
+          margin-right: auto;
+          box-shadow: 0 0 20px rgba(0, 255, 136, 0.2);
+          border: 1px solid #00ff88;
+          color: #00ff88;
+          z-index: 1;
+          position: relative;
+        }
+
+        #status {
+          margin-top: 10px;
+          font-weight: bold;
+          background: linear-gradient(145deg, #1a1f3a 0%, #0d1117 100%);
+          padding: 10px;
+          border-radius: 8px;
+          max-width: 400px;
+          margin-left: auto;
+          margin-right: auto;
+          box-shadow: 0 0 20px rgba(0, 255, 136, 0.2);
+          border: 1px solid #00ff88;
+          color: #00ffff;
+          z-index: 1;
+          position: relative;
+        }
+
+        #puzzle-panel {
+          display: none;
+          margin-top: 20px;
+          padding: 20px;
+          border: 2px solid #00ff88;
+          background: linear-gradient(145deg, #1a1f3a 0%, #0d1117 100%);
+          max-width: 300px;
+          margin-left: auto;
+          margin-right: auto;
+          border-radius: 8px;
+          box-shadow: 0 0 30px rgba(0, 255, 136, 0.4);
+          color: #00ff88;
+          z-index: 1;
+          position: relative;
+        }
+
+        #puzzle-panel h3 {
+          color: #00ffff;
+          text-shadow: 0 0 10px rgba(0, 255, 255, 0.6);
+        }
+
+        /* ===== CLOSE BUTTON ===== */
+        .close {
+          color: #00ff88;
+          position: absolute;
+          top: 10px;
+          right: 20px;
+          font-size: 28px;
+          font-weight: bold;
+          cursor: pointer;
+          transition: color 0.3s;
+        }
+
+        .close:hover,
+        .close:focus {
+          color: #00ffff;
+          text-shadow: 0 0 10px rgba(0, 255, 255, 0.8);
+        }
+
+        /* ===== ANIMATIONS ===== */
+        @keyframes fadeIn {
+          from { opacity: 0; }
+          to { opacity: 1; }
+        }
+
+        @keyframes fadeOut {
+          from { opacity: 1; }
+          to { opacity: 0; }
+        }
+
+        @keyframes slideDown {
+          from { transform: translateY(-50px); opacity: 0; }
+          to { transform: translateY(0); opacity: 1; }
+        }
+
+        @keyframes victoryPulse {
+          0%, 100% {
+            transform: scale(1);
+            text-shadow: 0 0 15px rgba(0, 255, 255, 0.8);
+          }
+          50% {
+            transform: scale(1.05);
+            text-shadow: 0 0 30px rgba(0, 255, 255, 1), 0 0 40px rgba(0, 255, 136, 0.8);
+          }
+        }
+
+        @keyframes confettiFall {
+          0% { transform: translateY(-800px) rotate(0deg); opacity: 1; }
+          100% { transform: translateY(200px) rotate(720deg); opacity: 0; }
+        }
+
+        @keyframes glowPulse {
+          0%, 100% {
+            box-shadow: 0 0 40px rgba(0, 255, 136, 0.4);
+            border-color: #00ff88;
+          }
+          50% {
+            box-shadow: 0 0 60px rgba(0, 255, 255, 0.8), 0 0 80px rgba(0, 255, 136, 0.6);
+            border-color: #00ffff;
+          }
+        }
+
+        @keyframes starBurst {
+          0% {
+            transform: translate(0, 0) scale(0) rotate(0deg);
+            opacity: 1;
+          }
+          100% {
+            transform: translate(var(--tx), var(--ty)) scale(1) rotate(360deg);
+            opacity: 0;
+          }
+        }
+
+        /* ===== EFFECTS ===== */
+        .victory-text {
+          animation: victoryPulse 1.5s ease-in-out infinite;
+        }
+
+        .confetti {
+          position: absolute;
+          width: 10px;
+          height: 10px;
+          background: #00ff88;
+          animation: confettiFall 3s linear infinite;
+        }
+
+        .glow-pulse {
+          animation: glowPulse 2s ease-in-out infinite;
+        }
+
+        .star {
+          position: absolute;
+          font-size: 24px;
+          animation: starBurst 1s ease-out forwards;
+          pointer-events: none;
         }
     </style>
+
+
 </head>
 <body>
 <h1>Code and Conquer</h1>
@@ -311,6 +440,30 @@
         <button id="backButton" style="display: none;">Back</button>
     </div>
 </div>
+
+<!-- Surrender Modal -->
+<div id="surrenderModal" class="modal">
+    <div class="modal-content glow-pulse">
+        <span class="close" data-modal="surrenderModal">&times;</span>
+        <h3 class="victory-text">Victory!</h3>
+        <p style="color: #00ff88; font-size: 18px;">Congratulations, your competitor has surrendered</p>
+        <button>Continue</button>
+    </div>
+</div>
+
+<div id="phaseModal" class="modal">
+    <div class="modal-content">
+        <span class="close" data-modal="phaseModal">&times;</span>
+        <h3>Phase Complete</h3>
+        <p style="color: #00ff88; font-size: 18px;">The first phase is completed. Prepare for the revenge phase.</p>
+        <div class="modal-buttons">
+            <button>Surrender</button>
+            <button>Ready</button>
+        </div>
+    </div>
+</div>
+
+
 
 <div id="status"></div>
 
@@ -456,6 +609,7 @@ function showRoomSelection() {
         <br><br>
 
         <label for="playerName" style="color: white;">Enter your name:</label>
+        <br>
         <input type="text" id="playerName" maxlength="10" placeholder="Your name..." style="margin-top: 8px;">
         <br><br>
 
@@ -567,7 +721,16 @@ function handleServerMessage(data) {
         return;
     }
 
-    if (data.type === "check_result") {
+    if (data.type === "player_left" && gameStarted === true) {
+
+        surrenderModal.style.display = 'block';
+        createConfetti();
+        createStarBurst();
+
+    }
+
+
+     if (data.type === "check_result") {
 
                 console.log(data.type);
                 console.log(data.status);
@@ -676,11 +839,18 @@ function handleServerMessage(data) {
                 cell.style.borderColor = "#ffffff";
             }
         }
+
+        if(data.count_lands===25){
+            phaseModal.style.display = 'block';
+        }
+
     }
 }
 
 // keep the leftover placeholder (but now socket used)
 function claimCell(i) {
+
+    if (playerRole === "spectator") return;
 
     if (!gameStarted) {
         alert("⏳ The game hasn't started yet!");
@@ -688,7 +858,7 @@ function claimCell(i) {
     }
 
 
-    if (playerRole === "spectator") return;
+
 
     const cell = document.querySelector(`.cell[data-index='${i}']`);
     const currentBorder = cell.style.borderColor;
@@ -734,6 +904,52 @@ function claimCell(i) {
             selectedCellId = null;
         } else {
             alert("❌ Wrong answer, try again!");
+        }
+    }
+
+
+    // Celebrate
+    function createConfetti() {
+        const modal = document.getElementById('surrenderModal');
+        const colors = ['#00ff88', '#00ffff', '#88ff00', '#ffff00'];
+
+        for (let i = 0; i < 50; i++) {
+            setTimeout(() => {
+                const confetti = document.createElement('div');
+                confetti.className = 'confetti';
+                confetti.style.left = Math.random() * 100 + '%';
+                confetti.style.background = colors[Math.floor(Math.random() * colors.length)];
+                confetti.style.animationDelay = Math.random() * 0.5 + 's';
+                confetti.style.animationDuration = (Math.random() * 2 + 2) + 's';
+                modal.appendChild(confetti);
+
+                setTimeout(() => confetti.remove(), 5000);
+            }, i * 50);
+        }
+    }
+
+    function createStarBurst() {
+        const modalContent = document.querySelector('#surrenderModal .modal-content');
+        const stars = ['✨', '⭐', '🌟', '💫'];
+
+        for (let i = 0; i < 12; i++) {
+            const star = document.createElement('div');
+            star.className = 'star';
+            star.textContent = stars[Math.floor(Math.random() * stars.length)];
+
+            const angle = (i / 12) * Math.PI * 2;
+            const distance = 150;
+            const tx = Math.cos(angle) * distance;
+            const ty = Math.sin(angle) * distance;
+
+            star.style.setProperty('--tx', tx + 'px');
+            star.style.setProperty('--ty', ty + 'px');
+            star.style.left = '50%';
+            star.style.top = '20%';
+
+            modalContent.appendChild(star);
+
+            setTimeout(() => star.remove(), 1000);
         }
     }
 

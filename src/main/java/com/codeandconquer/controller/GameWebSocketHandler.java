@@ -18,6 +18,7 @@ public class GameWebSocketHandler extends TextWebSocketHandler {
     private final ObjectMapper mapper = new ObjectMapper();
     // map session -> roomName
     private final Map<WebSocketSession, String> sessionRooms = new ConcurrentHashMap<>();
+    private WebSocketSession managerSession ;
 
     @Override
     public void afterConnectionEstablished(WebSocketSession session) throws Exception {
@@ -40,22 +41,44 @@ public class GameWebSocketHandler extends TextWebSocketHandler {
             handleSelect(session, payload);
         } else if ("check".equals(type)) {
             handleCheck(session, payload);
+        } else if ("join_manager".equals(type)) {
+            handleManager(session);
         } else {
             System.out.println("Unknown message type: " + type + " payload: " + payload);
         }
     }
 
+    private void handleManager(WebSocketSession session) throws Exception {
+
+        this.managerSession=session;
+
+
+        Map<String, Object> response = new HashMap<>();
+        GameRoom room = roomManager.getRoom("Room1");
+        response.put("type", "first_login");
+        response.put("players", room.getPlayers());
+        response.put("spectators", room.getSpectators());
+        response.put("claimedLands", room.getClaimedLands());
+        response.put("gameStarted", room.isGameStarted());
+        session.sendMessage(new TextMessage(mapper.writeValueAsString(response)));
+
+
+
+    }
 
     private void handleCheck(WebSocketSession session, Map<String, Object> msg) throws Exception {
         String roomName = (String) msg.get("roomName");
         String playerName = (String) msg.get("playerName");
         String role =(String) msg.get("role");
+        System.out.println("role: "+role);
         int check=0;
-        if(role=="player") {
+        if(Objects.equals(role, "player")) {
              check = roomManager.getRoom(roomName).checkPlayer(playerName);
         } else {
             check = roomManager.getRoom(roomName).checkSpectator(playerName);
         }
+
+        System.out.println("check: "+check);
 
         if(check==1){
             Map<String, Object> my_msg = Map.of(
@@ -135,6 +158,7 @@ public class GameWebSocketHandler extends TextWebSocketHandler {
 
         String playerColor = room.getPlayers().get(playerName);
         boolean success = room.claimTile(tileId, playerColor);
+        room.setCount(room.getCount()+1);
 
 
 
@@ -146,6 +170,7 @@ public class GameWebSocketHandler extends TextWebSocketHandler {
         res.put("playerColor", playerColor);
         res.put("success", success);
         res.put("claimedLands", room.getClaimedLands());
+        res.put("count_lands",room.getCount());
 
         broadcast(roomName, res);
     }
@@ -158,10 +183,20 @@ public class GameWebSocketHandler extends TextWebSocketHandler {
                 s.sendMessage(new TextMessage(json));
             }
         }
+        if(managerSession!=null) {
+            managerSession.sendMessage(new TextMessage(json));
+        }
     }
 
     @Override
     public void afterConnectionClosed(WebSocketSession session, CloseStatus status) throws Exception {
+        if(managerSession==session){
+            managerSession=null;
+            return;
+        }
+        else if(sessionRooms.get(session)==null){
+            return;
+        }
         String name =roomManager.getRoom(sessionRooms.get(session)).removeSession(session);
         String room =roomManager.getRoom(sessionRooms.get(session)).getRoomName();
         sessionRooms.remove(session);

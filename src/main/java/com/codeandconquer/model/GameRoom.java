@@ -13,6 +13,7 @@ public class GameRoom {
     private final Set<String> spectators = new HashSet<>();
     private final Map<String, WebSocketSession> spectatorsSessions = new LinkedHashMap<>();
     private final Map<Integer, String> claimedLands = new HashMap<>();// land -> color
+    private int count = 0;
 
     private String phase = "first";
     private boolean gameStarted = false;
@@ -122,5 +123,13 @@ public class GameRoom {
 
     public String getRoomName() {
         return roomName;
+    }
+
+    public int getCount() {
+        return count;
+    }
+
+    public void setCount(int count) {
+        this.count = count;
     }
 }
