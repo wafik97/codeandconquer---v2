@@ -249,6 +249,10 @@ function handleServerMessage(data) {
     if (data.type === "player_left" && gameStarted === true) {
 
         surrenderModal.style.display = 'block';
+        if(playerRole=== "spectator"){
+        document.getElementById("declareWinner").innerText = "The game came to an end, the other competitor has surrendered";
+
+        }
         createConfetti();
         createStarBurst();
 

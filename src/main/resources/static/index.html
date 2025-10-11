@@ -3,21 +3,18 @@
 <head>
     <meta charset="UTF-8">
     <title>Code and Conquer</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="mobile-web-app-capable" content="yes">
 
     <!-- CodeMirror Styles -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.58.2/codemirror.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.58.2/theme/dracula.min.css">
 
     <!-- CodeMirror JavaScript -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.58.2/codemirror.min.js"></script>
 
-    <!-- Add CodeMirror theme -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.58.2/theme/dracula.min.css">
-
-
     <link rel="stylesheet" href="styles.css">
-
-
 </head>
 <body>
 <h1>Code and Conquer</h1>
@@ -36,7 +33,7 @@
     <div class="modal-content glow-pulse">
         <span class="close" data-modal="surrenderModal">&times;</span>
         <h3 class="victory-text">Victory!</h3>
-        <p style="color: #00ff88; font-size: 18px;">Congratulations, your competitor has surrendered</p>
+        <p style="color: #00ff88; font-size: 18px;" id="declareWinner">Congratulations, your competitor has surrendered</p>
         <button>Continue</button>
     </div>
 </div>
@@ -45,15 +42,13 @@
     <div class="modal-content">
         <span class="close" data-modal="phaseModal">&times;</span>
         <h3>Phase Complete</h3>
-        <p style="color: #00ff88; font-size: 18px;">The first phase is completed. Prepare for the revenge phase.</p>
+        <p style="color: #00ff88; font-size: 18px;" id="declarePhase">The first phase is completed. Prepare for the revenge phase.</p>
         <div class="modal-buttons">
             <button>Surrender</button>
             <button>Ready</button>
         </div>
     </div>
 </div>
-
-
 
 <div id="status"></div>
 
@@ -65,7 +60,6 @@
     <h3 id="puzzle-title"></h3>
     <p id="puzzle-question">What is 2 + 2?</p>
     <textarea id="code-editor"></textarea>
-
     <br>
     <button onclick="submitAnswer()">Submit Answer</button>
 </div>
