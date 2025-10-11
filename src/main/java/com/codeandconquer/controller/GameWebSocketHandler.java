@@ -49,9 +49,13 @@ public class GameWebSocketHandler extends TextWebSocketHandler {
     private void handleCheck(WebSocketSession session, Map<String, Object> msg) throws Exception {
         String roomName = (String) msg.get("roomName");
         String playerName = (String) msg.get("playerName");
-
-
-        int check = roomManager.getRoom(roomName).checkPlayer(playerName);
+        String role =(String) msg.get("role");
+        int check=0;
+        if(role=="player") {
+             check = roomManager.getRoom(roomName).checkPlayer(playerName);
+        } else {
+            check = roomManager.getRoom(roomName).checkSpectator(playerName);
+        }
 
         if(check==1){
             Map<String, Object> my_msg = Map.of(

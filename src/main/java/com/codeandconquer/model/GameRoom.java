@@ -42,6 +42,14 @@ public class GameRoom {
         return 3;
     }
 
+    public synchronized int checkSpectator(String spectatorName) {
+        if (spectators.contains(spectatorName)){
+            return 2;
+        }
+
+        return 3;
+    }
+
     public synchronized boolean addSpectator(String spectatorName) {
         return spectators.add(spectatorName);
     }

@@ -507,7 +507,8 @@ function joinSelectedRoom() {
     socket.send(JSON.stringify({
       type: "check",
       roomName: selectedRoom,
-      playerName: playerName
+      playerName: playerName,
+      role: playerRole
     }));
 
 
@@ -659,6 +660,9 @@ function handleServerMessage(data) {
     if (data.type === "tile_update" && data.success) {
 
         const id = data.tileId;
+        if(selectedCellId === id){
+           document.getElementById('puzzle-panel').style.display = 'none';
+        }
         const col = data.playerColor;
         const cell = document.querySelector(`.cell[data-index='${id}']`);
         if (cell) {
@@ -683,24 +687,57 @@ function claimCell(i) {
         return;
     }
 
-    // minimal send for selecting a cell; do nothing if spectator
+
     if (playerRole === "spectator") return;
 
-    if (!socket || socket.readyState !== WebSocket.OPEN) {
-        alert("Not connected to server.");
+    const cell = document.querySelector(`.cell[data-index='${i}']`);
+    const currentBorder = cell.style.borderColor;
+
+    // Check if already claimed
+    if (currentBorder && currentBorder !== 'rgb(0, 255, 136)' && currentBorder !== '') {
+        alert("This cell is already conquered!");
         return;
     }
 
-    const message = {
-        type: "select",
-        roomName: selectedRoom,
-        playerName: playerName,
-        tileId: i
-    };
+    // Save selected cell and show puzzle
+    selectedCellId = i;
+    showPuzzle(i);
+    }
 
-    socket.send(JSON.stringify(message));
-    console.log("📤 Sent select:", message);
-}
+    function showPuzzle(cellIndex) {
+        document.getElementById('puzzle-title').innerText = `Puzzle for cell ${cellIndex + 1}`;
+        document.getElementById('puzzle-question').innerText = currentPuzzle.question;
+        document.getElementById('puzzle-answer').value = '';
+        document.getElementById('puzzle-panel').style.display = 'block';
+    }
+
+    function submitAnswer() {
+        const answer = document.getElementById('puzzle-answer').value.trim();
+        if (answer === "") {
+            alert("Please enter an answer.");
+            return;
+        }
+
+        // Check answer locally for now
+        if (answer === currentPuzzle.answer) {
+            // Hide puzzle
+            document.getElementById('puzzle-panel').style.display = 'none';
+
+            // Send message to server to claim land
+            socket.send(JSON.stringify({
+                type: "select",
+                roomName: selectedRoom,
+                playerName: playerName,
+                tileId: selectedCellId
+            }));
+
+            selectedCellId = null;
+        } else {
+            alert("❌ Wrong answer, try again!");
+        }
+    }
+
+
 
 </script>
 </body>
