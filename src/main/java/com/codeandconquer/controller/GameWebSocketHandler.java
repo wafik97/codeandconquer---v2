@@ -41,25 +41,27 @@ public class GameWebSocketHandler extends TextWebSocketHandler {
             handleSelect(session, payload);
         } else if ("check".equals(type)) {
             handleCheck(session, payload);
-        } else if ("join_manager".equals(type)) {
-            handleManager(session);
+        } else if ("room_manager".equals(type)) {
+            handleManager(session,(String) payload.get("roomName"));
         } else {
             System.out.println("Unknown message type: " + type + " payload: " + payload);
         }
     }
 
-    private void handleManager(WebSocketSession session) throws Exception {
+    private void handleManager(WebSocketSession session,String roomName) throws Exception {
 
         this.managerSession=session;
 
 
         Map<String, Object> response = new HashMap<>();
-        GameRoom room = roomManager.getRoom("Room1");
-        response.put("type", "first_login");
+        GameRoom room = roomManager.getRoom(roomName);
+        response.put("type", "update_data");
         response.put("players", room.getPlayers());
         response.put("spectators", room.getSpectators());
         response.put("claimedLands", room.getClaimedLands());
         response.put("gameStarted", room.isGameStarted());
+        response.put("roomName", roomName);
+
         session.sendMessage(new TextMessage(mapper.writeValueAsString(response)));
 
 
@@ -70,7 +72,7 @@ public class GameWebSocketHandler extends TextWebSocketHandler {
         String roomName = (String) msg.get("roomName");
         String playerName = (String) msg.get("playerName");
         String role =(String) msg.get("role");
-        System.out.println("role: "+role);
+      //  System.out.println("role: "+role);
         int check=0;
         if(Objects.equals(role, "player")) {
              check = roomManager.getRoom(roomName).checkPlayer(playerName);
@@ -78,7 +80,7 @@ public class GameWebSocketHandler extends TextWebSocketHandler {
             check = roomManager.getRoom(roomName).checkSpectator(playerName);
         }
 
-        System.out.println("check: "+check);
+    //    System.out.println("check: "+check);
 
         if(check==1){
             Map<String, Object> my_msg = Map.of(

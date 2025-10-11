@@ -10,6 +10,7 @@ public class GameRoom {
     private final Map<String, String> players = new LinkedHashMap<>(); // name -> color
     private final Map<String, WebSocketSession> playersSessions = new LinkedHashMap<>();
     private final List<String> colors = Arrays.asList("red", "blue");
+    private final int[] taken_color = new int[2];
     private final Set<String> spectators = new HashSet<>();
     private final Map<String, WebSocketSession> spectatorsSessions = new LinkedHashMap<>();
     private final Map<Integer, String> claimedLands = new HashMap<>();// land -> color
@@ -23,11 +24,21 @@ public class GameRoom {
         for (int i = 0; i < 25; i++) {
             claimedLands.put(i, null);
         }
+
+
     }
 
     public synchronized boolean addPlayer(String playerName,WebSocketSession session) {
+        String color;
         if (players.size() >= 2 || players.containsKey(playerName)) return false;
-        String color = colors.get(players.size());
+        if(taken_color[0]==0) {
+             color = colors.get(0);
+            taken_color[0]=1;
+        }
+        else{
+             color = colors.get(1);
+            taken_color[1]=1;
+        }
         players.put(playerName, color);
         playersSessions.put(playerName,session);
 
@@ -77,6 +88,12 @@ public class GameRoom {
             if (entry.getValue().equals(session)) {
                 String playerName = entry.getKey();
                 playersSessions.remove(playerName);
+                if(Objects.equals(players.get(playerName), "red")){
+                    taken_color[0]=0;
+                }
+                else{
+                    taken_color[1]=0;
+                }
                 players.remove(playerName);
                 return playerName;
             }

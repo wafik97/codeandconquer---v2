@@ -431,31 +431,31 @@
 
         <div class="section">
             <div class="grid-container">
-                <div class="grid-box">1</div>
-                <div class="grid-box">2</div>
-                <div class="grid-box">3</div>
-                <div class="grid-box">4</div>
-                <div class="grid-box">5</div>
-                <div class="grid-box">6</div>
-                <div class="grid-box">7</div>
-                <div class="grid-box">8</div>
-                <div class="grid-box">9</div>
-                <div class="grid-box">10</div>
-                <div class="grid-box">11</div>
-                <div class="grid-box">12</div>
-                <div class="grid-box">13</div>
-                <div class="grid-box">14</div>
-                <div class="grid-box">15</div>
-                <div class="grid-box">16</div>
-                <div class="grid-box">17</div>
-                <div class="grid-box">18</div>
-                <div class="grid-box">19</div>
-                <div class="grid-box">20</div>
-                <div class="grid-box">21</div>
-                <div class="grid-box">22</div>
-                <div class="grid-box">23</div>
-                <div class="grid-box">24</div>
-                <div class="grid-box">25</div>
+                <div class="grid-box" id="cell-1">1</div>
+                <div class="grid-box" id="cell-2">2</div>
+                <div class="grid-box" id="cell-3">3</div>
+                <div class="grid-box" id="cell-4">4</div>
+                <div class="grid-box" id="cell-5">5</div>
+                <div class="grid-box" id="cell-6">6</div>
+                <div class="grid-box" id="cell-7">7</div>
+                <div class="grid-box" id="cell-8">8</div>
+                <div class="grid-box" id="cell-9">9</div>
+                <div class="grid-box" id="cell-10">10</div>
+                <div class="grid-box" id="cell-11">11</div>
+                <div class="grid-box" id="cell-12">12</div>
+                <div class="grid-box" id="cell-13">13</div>
+                <div class="grid-box" id="cell-14">14</div>
+                <div class="grid-box" id="cell-15">15</div>
+                <div class="grid-box" id="cell-16">16</div>
+                <div class="grid-box" id="cell-17">17</div>
+                <div class="grid-box" id="cell-18">18</div>
+                <div class="grid-box" id="cell-19">19</div>
+                <div class="grid-box" id="cell-20">20</div>
+                <div class="grid-box" id="cell-21">21</div>
+                <div class="grid-box" id="cell-22">22</div>
+                <div class="grid-box" id="cell-23">23</div>
+                <div class="grid-box" id="cell-24">24</div>
+                <div class="grid-box" id="cell-25">25</div>
             </div>
         </div>
 
@@ -524,7 +524,8 @@
             socket.onopen = () => {
 
                 socket.send(JSON.stringify({
-                  type: "join_manager",
+                  type: "room_manager",
+                  roomName: selectedRoom
 
                 }));
 
@@ -568,13 +569,50 @@
                 return;
             }
 
-            if (data.type === "first_login") {
+            if (data.type === "update_data" && selectedRoom=== data.roomName) {
 
                 updatePlayers(data.players);
                 updateClaimedLands(data.claimedLands);
-
-
             }
+            if (data.type === "tile_update" && selectedRoom=== data.roomName) {
+
+                colorCell(data.tileId, data.playerColor)
+            }
+            if (data.type === "room_update" && selectedRoom=== data.roomName) {
+
+                updatePlayers(data.players);
+            }
+            if (data.type === "player_left" && selectedRoom=== data.roomName) {
+
+                removePlayerByName(data.playerName)
+            }
+
+        }
+
+
+        document.getElementById("room").addEventListener("change", function() {
+            selectedRoom = this.value;
+            socket.send(JSON.stringify({
+                  type: "room_manager",
+                  roomName: selectedRoom
+
+                }));
+        });
+
+
+        function removePlayerByName(name) {
+          document.querySelectorAll('.player-name').forEach(el => {
+            if (el.textContent.trim() === name) {
+              el.textContent = '';
+            }
+          });
+        }
+
+
+
+        function colorCell(cellNumber, color) {
+          document.getElementById(`cell-${cellNumber+1}`).style.backgroundColor = color;
+          document.getElementById(`cell-${cellNumber+1}`).style.color = 'white';
         }
 
         function updatePlayers(players) {
