@@ -2,141 +2,254 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Code & Conquer</title>
+    <title>Code and Conquer</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
     <style>
-        body { font-family: Arial, sans-serif; margin: 30px; }
-        #rooms button { margin: 5px; padding: 10px 20px; }
-        #game-board { display: grid; grid-template-columns: repeat(5, 50px); gap: 5px; margin-top: 20px; }
-        .cell { width: 50px; height: 50px; border: 1px solid #aaa; display: flex; align-items: center; justify-content: center; cursor: pointer; }
-        .cell.red { background-color: #ffcccc; }
-        .cell.blue { background-color: #ccccff; }
-        #status { margin-top: 20px; font-weight: bold; }
+        body {
+            font-family: 'Courier New', monospace;
+            padding: 10px;
+            text-align: center;
+            background: linear-gradient(135deg, #0a0e27 0%, #1a1f3a 50%, #0f1419 100%);
+            min-height: 100vh;
+            margin: 0;
+            position: relative;
+            overflow-x: hidden;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image:
+                repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0, 255, 150, 0.03) 2px, rgba(0, 255, 150, 0.03) 4px),
+                repeating-linear-gradient(90deg, transparent, transparent 2px, rgba(0, 255, 150, 0.03) 2px, rgba(0, 255, 150, 0.03) 4px);
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        h1 {
+            color: #00ff88;
+            text-shadow: 0 0 20px rgba(0, 255, 136, 0.8);
+            font-family: 'Courier New', monospace;
+            letter-spacing: 3px;
+            z-index: 1;
+            position: relative;
+            margin-bottom: 50px;
+        }
+
+        h1::before {
+            content: '{ ';
+            color: #00ffff;
+        }
+
+        h1::after {
+            content: ' }';
+            color: #00ffff;
+        }
+
+        .buttons-container {
+            display: flex;
+            gap: 30px;
+            z-index: 1;
+            position: relative;
+        }
+
+        button {
+            padding: 15px 30px;
+            font-size: 18px;
+            border-radius: 5px;
+            font-family: 'Courier New', monospace;
+            background: linear-gradient(135deg, #00ff88 0%, #00cc70 100%);
+            color: #0d1117;
+            border: none;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        button:hover {
+            background: linear-gradient(135deg, #00ffff 0%, #00cccc 100%);
+            box-shadow: 0 0 20px rgba(0, 255, 255, 0.6);
+            transform: translateY(-2px);
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(10, 14, 39, 0.95);
+            backdrop-filter: blur(5px);
+            padding-top: 60px;
+            animation: fadeIn 0.3s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        @keyframes fadeOut {
+            from { opacity: 1; }
+            to { opacity: 0; }
+        }
+
+        .modal.closing {
+            animation: fadeOut 0.3s ease;
+        }
+
+        .modal-content {
+            background: linear-gradient(145deg, #1a1f3a 0%, #0d1117 100%);
+            margin: 10% auto;
+            padding: 40px;
+            border: 2px solid #00ff88;
+            width: 350px;
+            text-align: center;
+            border-radius: 8px;
+            box-shadow: 0 0 40px rgba(0, 255, 136, 0.4);
+            animation: slideDown 0.4s ease;
+            position: relative;
+        }
+
+        @keyframes slideDown {
+            from {
+                transform: translateY(-50px);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+
+        .modal-content h3 {
+            color: #00ffff;
+            text-shadow: 0 0 15px rgba(0, 255, 255, 0.8);
+            font-family: 'Courier New', monospace;
+            letter-spacing: 2px;
+            margin-bottom: 25px;
+        }
+
+        .modal-content button {
+            width: 100%;
+            margin: 10px 0;
+        }
+
+        .close {
+            color: #00ff88;
+            position: absolute;
+            top: 10px;
+            right: 20px;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: color 0.3s;
+        }
+
+        .close:hover,
+        .close:focus {
+            color: #00ffff;
+            text-shadow: 0 0 10px rgba(0, 255, 255, 0.8);
+        }
+
+        .modal-buttons {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        .modal-buttons button {
+            width: auto;
+            flex: 1;
+        }
     </style>
 </head>
 <body>
-<h1>Code & Conquer</h1>
+<h1>Code and Conquer</h1>
 
-<div id="rooms">
-    <h3>Select a Room:</h3>
-    <button onclick="joinSelectedRoom('Room1')">Room 1</button>
-    <button onclick="joinSelectedRoom('Room2')">Room 2</button>
-    <button onclick="joinSelectedRoom('Room3')">Room 3</button>
-    <button onclick="joinSelectedRoom('Room4')">Room 4</button>
+<div class="buttons-container">
+    <button id="surrenderBtn">Surrender</button>
+    <button id="phaseBtn">Complete Phase</button>
 </div>
 
-<div id="status">Status: Not connected</div>
+<!-- Surrender Modal -->
+<div id="surrenderModal" class="modal">
+    <div class="modal-content">
+        <span class="close" data-modal="surrenderModal">&times;</span>
+        <h3>Victory!</h3>
+        <p style="color: #00ff88; font-size: 18px;">Congratulations, your competitor has surrendered</p>
+        <button>Continue</button>
+    </div>
+</div>
 
-<div id="game-board"></div>
+<!-- Phase Complete Modal -->
+<div id="phaseModal" class="modal">
+    <div class="modal-content">
+        <span class="close" data-modal="phaseModal">&times;</span>
+        <h3>Phase Complete</h3>
+        <p style="color: #00ff88; font-size: 18px;">The first phase is completed. Prepare for the revenge phase.</p>
+        <div class="modal-buttons">
+            <button>Surrender</button>
+            <button>Ready</button>
+        </div>
+    </div>
+</div>
 
 <script>
-    let socket = null;
-    let playerName = null;
-    let role = null;
-    let roomName = null;
-    let connected = "first";
+    // Get modal elements
+    const surrenderModal = document.getElementById('surrenderModal');
+    const phaseModal = document.getElementById('phaseModal');
+    const surrenderBtn = document.getElementById('surrenderBtn');
+    const phaseBtn = document.getElementById('phaseBtn');
+    const closeButtons = document.querySelectorAll('.close');
 
-    // 🧠 Connect to backend WebSocket
-    function connectWebSocket() {
-        const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-        const host = window.location.host;
-        socket = new WebSocket(`${protocol}//${host}/game`);
-
-        socket.onopen = () => {
-            console.log("✅ Connected to WebSocket");
-            document.getElementById("status").textContent = "Status: Connected";
-            if (connected === "lost") window.location.reload();
-            connected = "connected";
-        };
-
-        socket.onmessage = (event) => {
-            const data = JSON.parse(event.data);
-            console.log("📩 Received:", data);
-            handleServerMessage(data);
-        };
-
-        socket.onclose = () => {
-            console.warn("❌ Disconnected. Reconnecting in 3s...");
-            document.getElementById("status").textContent = "Status: Disconnected";
-            connected = "lost";
-            setTimeout(connectWebSocket, 3000);
-        };
-
-        socket.onerror = (err) => console.error("WebSocket error:", err);
+    // Open surrender modal
+    surrenderBtn.onclick = function() {
+        surrenderModal.style.display = 'block';
     }
 
-    function joinSelectedRoom(selectedRoom) {
-        if (!socket || socket.readyState !== WebSocket.OPEN) {
-            alert("WebSocket not connected yet!");
-            return;
-        }
-
-        playerName = prompt("Enter your name:");
-        if (!playerName) return;
-
-        const asSpectator = confirm("Join as spectator?");
-        role = asSpectator ? "spectator" : "player";
-        roomName = selectedRoom;
-
-        const joinMessage = {
-            type: "join_room",
-            playerName,
-            roomName,
-            role
-        };
-
-        socket.send(JSON.stringify(joinMessage));
+    // Open phase modal
+    phaseBtn.onclick = function() {
+        phaseModal.style.display = 'block';
     }
 
-    function handleServerMessage(data) {
-        if (data.type === "room_update") {
-            const players = data.players ? Object.entries(data.players).map(([n, c]) => `${n} (${c})`).join(", ") : "None";
-            const spectators = data.spectators ? Array.from(data.spectators).join(", ") : "None";
-            document.getElementById("status").textContent = `Room: ${roomName} | Players: ${players} | Spectators: ${spectators}`;
-            renderBoard(data.claimedLands);
+    // Close modals when clicking X
+    closeButtons.forEach(btn => {
+        btn.onclick = function() {
+            const modalId = this.getAttribute('data-modal');
+            const modal = document.getElementById(modalId);
+            modal.classList.add('closing');
+            setTimeout(() => {
+                modal.style.display = 'none';
+                modal.classList.remove('closing');
+            }, 300);
         }
+    });
 
-        if (data.type === "tile_update") {
-            updateTile(data.tileId, data.playerColor);
+    // Close modals when clicking outside
+    window.onclick = function(event) {
+        if (event.target.classList.contains('modal')) {
+            event.target.classList.add('closing');
+            setTimeout(() => {
+                event.target.style.display = 'none';
+                event.target.classList.remove('closing');
+            }, 300);
         }
     }
-
-    function renderBoard(claimedLands = {}) {
-        const board = document.getElementById("game-board");
-        board.innerHTML = "";
-        for (let i = 0; i < 25; i++) {
-            const cell = document.createElement("div");
-            cell.classList.add("cell");
-            const color = claimedLands[i];
-            if (color) cell.classList.add(color);
-            cell.textContent = i;
-            cell.onclick = () => selectTile(i);
-            board.appendChild(cell);
-        }
-    }
-
-    function selectTile(tileId) {
-        if (role === "spectator") return; // spectators can't claim tiles
-        if (!socket || socket.readyState !== WebSocket.OPEN) return;
-
-        const msg = {
-            type: "select",
-            playerName,
-            roomName,
-            tileId
-        };
-        socket.send(JSON.stringify(msg));
-    }
-
-    function updateTile(tileId, color) {
-        const cells = document.querySelectorAll(".cell");
-        const cell = cells[tileId];
-        if (cell) {
-            cell.classList.add(color);
-        }
-    }
-
-    // auto-connect on load
-    connectWebSocket();
 </script>
 </body>
 </html>

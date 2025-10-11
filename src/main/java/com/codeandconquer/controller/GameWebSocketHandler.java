@@ -102,10 +102,10 @@ public class GameWebSocketHandler extends TextWebSocketHandler {
         response.put("roomName", roomName);
 
         if ("player".equals(role)) {
-            boolean added = room.addPlayer(playerName);
+            boolean added = room.addPlayer(playerName,session);
             response.put("success", added);
         } else {
-            room.addSpectator(playerName);
+            room.addSpectator(playerName,session);
         }
 
         response.put("players", room.getPlayers());
@@ -162,6 +162,17 @@ public class GameWebSocketHandler extends TextWebSocketHandler {
 
     @Override
     public void afterConnectionClosed(WebSocketSession session, CloseStatus status) throws Exception {
+        String name =roomManager.getRoom(sessionRooms.get(session)).removeSession(session);
+        String room =roomManager.getRoom(sessionRooms.get(session)).getRoomName();
         sessionRooms.remove(session);
+        if(!Objects.equals(name, "nvm")) {
+            Map<String, Object> res = new HashMap<>();
+            res.put("type", "player_left");
+            res.put("roomName", room);
+            res.put("playerName", name);
+
+            broadcast(room, res);
+        }
+
     }
 }

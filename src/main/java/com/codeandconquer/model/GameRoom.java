@@ -1,13 +1,17 @@
 package com.codeandconquer.model;
 
+import org.springframework.web.socket.WebSocketSession;
+
 import java.util.*;
 
 public class GameRoom {
 
     private final String roomName;
     private final Map<String, String> players = new LinkedHashMap<>(); // name -> color
+    private final Map<String, WebSocketSession> playersSessions = new LinkedHashMap<>();
     private final List<String> colors = Arrays.asList("red", "blue");
     private final Set<String> spectators = new HashSet<>();
+    private final Map<String, WebSocketSession> spectatorsSessions = new LinkedHashMap<>();
     private final Map<Integer, String> claimedLands = new HashMap<>();// land -> color
 
     private String phase = "first";
@@ -20,10 +24,11 @@ public class GameRoom {
         }
     }
 
-    public synchronized boolean addPlayer(String playerName) {
+    public synchronized boolean addPlayer(String playerName,WebSocketSession session) {
         if (players.size() >= 2 || players.containsKey(playerName)) return false;
         String color = colors.get(players.size());
         players.put(playerName, color);
+        playersSessions.put(playerName,session);
 
         // Start game when 2 players are in
         if (players.size() == 2) {
@@ -50,8 +55,10 @@ public class GameRoom {
         return 3;
     }
 
-    public synchronized boolean addSpectator(String spectatorName) {
-        return spectators.add(spectatorName);
+    public synchronized void addSpectator(String spectatorName,WebSocketSession session) {
+         spectators.add(spectatorName);
+        spectatorsSessions.put(spectatorName,session);
+
     }
 
     public synchronized boolean claimTile(int tileId, String playerColor) {
@@ -61,6 +68,33 @@ public class GameRoom {
         claimedLands.put(tileId, playerColor);
         return true;
     }
+
+    public synchronized String removeSession(WebSocketSession session) {
+
+
+        for (Map.Entry<String, WebSocketSession> entry : playersSessions.entrySet()) {
+            if (entry.getValue().equals(session)) {
+                String playerName = entry.getKey();
+                playersSessions.remove(playerName);
+                players.remove(playerName);
+                return playerName;
+            }
+        }
+
+
+        for (Map.Entry<String, WebSocketSession> entry : spectatorsSessions.entrySet()) {
+            if (entry.getValue().equals(session)) {
+                String spectatorName = entry.getKey();
+                spectatorsSessions.remove(spectatorName);
+                spectators.remove(spectatorName);
+                return "nvm";
+            }
+        }
+
+
+        return "not_found";
+    }
+
 
     public synchronized boolean isGameStarted() {
         return gameStarted;
