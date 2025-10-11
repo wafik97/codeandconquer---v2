@@ -9,14 +9,19 @@
     let playersInRooms = {}; // { roomName: number of players }
     let connected = "first";
     let selectedCellId = null;
+    let codeAnswer = "hello world";
     let currentPuzzle = { question: "What is 2 + 2?", answer: "4" }; // example puzzle
+    const JUDGE0_URL = `http://${window.location.hostname}:2358`;
+
     const starterJavaCode =
-    `   import java.util.*;
-        public class Main {
-            public static void main(String[] args) {
-             // Write your code here
-          }
-        }`;
+    `     import java.util.*;
+
+
+          public class Main {
+             public static void main(String[] args) {
+              // Write your code here
+             }
+          }`;
 
 
 
@@ -407,7 +412,7 @@ function claimCell(i) {
 
     function showPuzzle(cellIndex) {
         document.getElementById('puzzle-title').innerText = `Puzzle for cell ${cellIndex + 1}`;
-        document.getElementById('puzzle-question').innerText = currentPuzzle.question;
+        document.getElementById('puzzle-question').innerText = "Print \"hello world\"";
 
         document.getElementById('puzzle-panel').style.display = 'block';
         editor.setValue(starterJavaCode);
@@ -421,23 +426,34 @@ function claimCell(i) {
             return;
         }
 
-        // Check answer locally for now
-        if (answer === currentPuzzle.answer) {
-            // Hide puzzle
-            document.getElementById('puzzle-panel').style.display = 'none';
+        runUserCode(answer)
+            .then(result => {
+              const out = (result.stdout || result.stderr || "").trim();
 
-            // Send message to server to claim land
-            socket.send(JSON.stringify({
-                type: "select",
-                roomName: selectedRoom,
-                playerName: playerName,
-                tileId: selectedCellId
-            }));
 
-            selectedCellId = null;
-        } else {
-            alert("❌ Wrong answer, try again!");
-        }
+              // compare output to expected answer
+              if (out === String(codeAnswer).trim()) {
+                // correct -> notify server to claim tile
+
+                socket.send(JSON.stringify({
+                  type: "select",
+                  roomName: selectedRoom,
+                  playerName: playerName,
+                  tileId: selectedCellId
+                }));
+                document.getElementById('puzzle-panel').style.display = 'none';
+                selectedCellId = null;
+              } else {
+
+        		document.getElementById('output').textContent = "❌ Wrong answer, output:\n" + out; // show to user
+              }
+            })
+            .catch(err => {
+              console.error(err);
+              alert("Execution error, check console.");
+            });
+
+
     }
 
 
@@ -498,4 +514,17 @@ function claimCell(i) {
         autoCloseBrackets: true,    // Auto-close brackets
         extraKeys: { "Ctrl-Space": "autocomplete" },
     });
+
+
+    function runUserCode(sourceCode) {
+      return fetch(`${JUDGE0_URL}/submissions?base64_encoded=false&wait=true`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          source_code: sourceCode,
+          language_id: 62
+        })
+      }).then(r => r.json());
+    }
+
 
