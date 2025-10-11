@@ -10,6 +10,14 @@
     let connected = "first";
     let selectedCellId = null;
     let currentPuzzle = { question: "What is 2 + 2?", answer: "4" }; // example puzzle
+    const starterJavaCode =
+    `   import java.util.*;
+        public class Main {
+            public static void main(String[] args) {
+             // Write your code here
+          }
+        }`;
+
 
 
 
@@ -400,12 +408,14 @@ function claimCell(i) {
     function showPuzzle(cellIndex) {
         document.getElementById('puzzle-title').innerText = `Puzzle for cell ${cellIndex + 1}`;
         document.getElementById('puzzle-question').innerText = currentPuzzle.question;
-        document.getElementById('puzzle-answer').value = '';
+
         document.getElementById('puzzle-panel').style.display = 'block';
+        editor.setValue(starterJavaCode);
     }
 
     function submitAnswer() {
-        const answer = document.getElementById('puzzle-answer').value.trim();
+        //const answer = document.getElementById('puzzle-answer').value.trim();
+        var answer = editor.getValue();
         if (answer === "") {
             alert("Please enter an answer.");
             return;
@@ -475,3 +485,17 @@ function claimCell(i) {
             setTimeout(() => star.remove(), 1000);
         }
     }
+
+    // Initialize CodeMirror
+    var editor = CodeMirror.fromTextArea(document.getElementById('code-editor'), {
+        lineNumbers: true,          // Show line numbers
+        mode: "text/x-java",         // Set the mode for JavaScript (you can change this to other languages like python, html, etc.)
+        theme: "dracula",           // Optional: a dark theme, you can choose others
+        indentUnit: 4,              // Indentation settings
+        smartIndent: true,          // Enable smart indentation
+        tabSize: 4,                 // Tab size
+        matchBrackets: true,        // Highlight matching brackets
+        autoCloseBrackets: true,    // Auto-close brackets
+        extraKeys: { "Ctrl-Space": "autocomplete" },
+    });
+

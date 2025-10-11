@@ -305,7 +305,7 @@
           padding: 20px;
           border: 2px solid #00ff88;
           background: linear-gradient(145deg, #1a1f3a 0%, #0d1117 100%);
-          max-width: 300px;
+          max-width: 1400px;
           margin-left: auto;
           margin-right: auto;
           border-radius: 8px;
@@ -414,4 +414,14 @@
           font-size: 24px;
           animation: starBurst 1s ease-out forwards;
           pointer-events: none;
+        }
+
+        .CodeMirror {
+          font-size: 25px;
+          line-height: 1.5;
+          height: 600px;
+
+          font-size: 14px;
+          direction: ltr;
+          text-align: left;
         }
