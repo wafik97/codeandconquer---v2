@@ -9,7 +9,37 @@
     let playersInRooms = {}; // { roomName: number of players }
     let connected = "first";
     let selectedCellId = null;
-    let currentPuzzle = { question: "What is 2 + 2?", answer: "4" }; // example puzzle
+    //let currentPuzzle = { question: "What is 2 + 2?", answer: "4" }; // example puzzle
+    const puzzles = [
+        { question: "What is 1 + 1?", answer: "2" },
+        { question: "What is 2 + 2?", answer: "4" },
+        { question: "What is 3 + 1?", answer: "4" },
+        { question: "What is 4 + 4?", answer: "8" },
+        { question: "What is 5 + 2?", answer: "7" },
+        { question: "What is 6 + 3?", answer: "9" },
+        { question: "What is 7 + 1?", answer: "8" },
+        { question: "What is 8 + 2?", answer: "10" },
+        { question: "What is 9 + 0?", answer: "9" },
+        { question: "What is 10 + 5?", answer: "15" },
+        { question: "What is 3 - 1?", answer: "2" },
+        { question: "What is 5 - 2?", answer: "3" },
+        { question: "What is 6 - 4?", answer: "2" },
+        { question: "What is 7 - 3?", answer: "4" },
+        { question: "What is 9 - 5?", answer: "4" },
+        { question: "What is 10 - 7?", answer: "3" },
+        { question: "What is 4 x 2?", answer: "8" },
+        { question: "What is 3 x 3?", answer: "9" },
+        { question: "What is 2 x 5?", answer: "10" },
+        { question: "What is 6 x 1?", answer: "6" },
+        { question: "What is 8 ÷ 2?", answer: "4" },
+        { question: "What is 10 ÷ 5?", answer: "2" },
+        { question: "What is 9 ÷ 3?", answer: "3" },
+        { question: "What is 6 ÷ 2?", answer: "3" },
+        { question: "What is 12 ÷ 4?", answer: "3" }
+    ];
+
+    let currentPuzzle = null;
+
     const starterJavaCode =
     `   import java.util.*;
         public class Main {
@@ -410,6 +440,8 @@ function claimCell(i) {
     }
 
     function showPuzzle(cellIndex) {
+        currentPuzzle = puzzles[cellIndex];
+
         document.getElementById('puzzle-title').innerText = `Puzzle for cell ${cellIndex + 1}`;
         document.getElementById('puzzle-question').innerText = currentPuzzle.question;
         document.getElementById('puzzle-answer').value = '';
