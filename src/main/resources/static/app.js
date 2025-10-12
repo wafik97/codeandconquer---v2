@@ -412,14 +412,15 @@ function claimCell(i) {
     function showPuzzle(cellIndex) {
         document.getElementById('puzzle-title').innerText = `Puzzle for cell ${cellIndex + 1}`;
         document.getElementById('puzzle-question').innerText = currentPuzzle.question;
-
+        document.getElementById('puzzle-answer').value = '';
         document.getElementById('puzzle-panel').style.display = 'block';
-        editor.setValue(starterJavaCode);
+        //editor.setValue(starterJavaCode);
     }
 
     function submitAnswer() {
         //const answer = document.getElementById('puzzle-answer').value.trim();
-        var answer = editor.getValue();
+        //var answer = editor.getValue();
+        const answer = document.getElementById('puzzle-answer').value.trim();
         if (answer === "") {
             alert("Please enter an answer.");
             return;
