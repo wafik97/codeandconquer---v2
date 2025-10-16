@@ -410,13 +410,13 @@ function handleServerMessage(data) {
                 if (cell) {
                     // minimal visual change: change border color per owner
                     if (col === null || col === undefined) {
-                        cell.style.borderColor = "#00ff88";
+                        cell.style.outlineColor = "#00ff88";
                     } else if (col === "red") {
-                        cell.style.borderColor = "#ff8888";
+                        cell.style.outlineColor = "#ff8888";
                     } else if (col === "blue") {
-                        cell.style.borderColor = "#8888ff";
+                        cell.style.outlineColor = "#8888ff";
                     } else {
-                        cell.style.borderColor = "#ffffff";
+                        cell.style.outlineColor = "#ffffff";
                     }
                 }
             }
@@ -436,13 +436,13 @@ function handleServerMessage(data) {
         const cell = document.querySelector(`.cell[data-index='${id}']`);
         if (cell) {
             if (col === null || col === undefined) {
-                cell.style.borderColor = "#00ff88";
+                cell.style.outlineColor = "#00ff88";
             } else if (col === "red") {
-                cell.style.borderColor = "#ff8888";
+                cell.style.outlineColor = "#ff8888";
             } else if (col === "blue") {
-                cell.style.borderColor = "#8888ff";
+                cell.style.outlineColor = "#8888ff";
             } else {
-                cell.style.borderColor = "#ffffff";
+                cell.style.outlineColor = "#ffffff";
             }
         }
 
@@ -467,7 +467,7 @@ function claimCell(i) {
 
 
     const cell = document.querySelector(`.cell[data-index='${i}']`);
-    const currentBorder = cell.style.borderColor;
+    const currentBorder = cell.style.outlineColor;
 
     // Check if already claimed
     if (currentBorder && currentBorder !== 'rgb(0, 255, 136)' && currentBorder !== '') {

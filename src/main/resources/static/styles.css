@@ -87,7 +87,9 @@ h1::after {
 .cell {
   aspect-ratio: 1 / 1;
   width: 100%;
-  border: 25px solid #00ff88;
+  border: 0;
+  outline: px25 solid #00ff88;
+  outline-offset: -25px;
   position: relative;
   cursor: pointer;
   background: linear-gradient(135deg, #1e2a3a 0%, #0f1923 100%);
@@ -116,7 +118,7 @@ h1::after {
 
 .cell:hover,
 .cell:active {
-  border-color: #00ffff;
+  outline-color: #00ffff;
   box-shadow: 0 0 20px rgba(0, 255, 255, 0.5), inset 0 0 20px rgba(0, 255, 255, 0.1);
   transform: scale(1.02);
   z-index: 10;
