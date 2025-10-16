@@ -406,26 +406,26 @@
                     <span class="player-label">Player 1:</span>
                     <span class="player-name"></span>
                 </div>
-                <button class="btn-remove">
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <line x1="18" y1="6" x2="6" y2="18"></line>
-                        <line x1="6" y1="6" x2="18" y2="18"></line>
-                    </svg>
-                    Remove
-                </button>
+<!--                <button class="btn-remove">-->
+<!--                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">-->
+<!--                        <line x1="18" y1="6" x2="6" y2="18"></line>-->
+<!--                        <line x1="6" y1="6" x2="18" y2="18"></line>-->
+<!--                    </svg>-->
+<!--                    Remove-->
+<!--                </button>-->
             </div>
             <div class="player-row">
                 <div class="player-info">
                     <span class="player-label">Player 2:</span>
                     <span class="player-name"></span>
                 </div>
-                <button class="btn-remove">
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <line x1="18" y1="6" x2="6" y2="18"></line>
-                        <line x1="6" y1="6" x2="18" y2="18"></line>
-                    </svg>
-                    Remove
-                </button>
+<!--                <button class="btn-remove">-->
+<!--                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">-->
+<!--                        <line x1="18" y1="6" x2="6" y2="18"></line>-->
+<!--                        <line x1="6" y1="6" x2="18" y2="18"></line>-->
+<!--                    </svg>-->
+<!--                    Remove-->
+<!--                </button>-->
             </div>
         </div>
 
@@ -459,48 +459,20 @@
             </div>
         </div>
 
+
+        <!--                <button class="btn-remove-small">-->
+        <!--                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">-->
+        <!--                        <line x1="18" y1="6" x2="6" y2="18"></line>-->
+        <!--                        <line x1="6" y1="6" x2="18" y2="18"></line>-->
+        <!--                    </svg>-->
+        <!--                    Remove-->
+        <!--                </button>-->
+
+
         <div class="section divider">
             <h2 class="spectator-title">Spectators</h2>
-            <div class="spectator-row">
-                <span class="spectator-name">Mike Wilson</span>
-                <button class="btn-remove-small">
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <line x1="18" y1="6" x2="6" y2="18"></line>
-                        <line x1="6" y1="6" x2="18" y2="18"></line>
-                    </svg>
-                    Remove
-                </button>
-            </div>
-            <div class="spectator-row">
-                <span class="spectator-name">Emily Davis</span>
-                <button class="btn-remove-small">
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <line x1="18" y1="6" x2="6" y2="18"></line>
-                        <line x1="6" y1="6" x2="18" y2="18"></line>
-                    </svg>
-                    Remove
-                </button>
-            </div>
-            <div class="spectator-row">
-                <span class="spectator-name">Alex Brown</span>
-                <button class="btn-remove-small">
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <line x1="18" y1="6" x2="6" y2="18"></line>
-                        <line x1="6" y1="6" x2="18" y2="18"></line>
-                    </svg>
-                    Remove
-                </button>
-            </div>
-            <div class="spectator-row">
-                <span class="spectator-name">Lisa Martinez</span>
-                <button class="btn-remove-small">
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <line x1="18" y1="6" x2="6" y2="18"></line>
-                        <line x1="6" y1="6" x2="18" y2="18"></line>
-                    </svg>
-                    Remove
-                </button>
-            </div>
+
+
         </div>
     </div>
 </div>
@@ -573,6 +545,8 @@
 
                 updatePlayers(data.players);
                 updateClaimedLands(data.claimedLands);
+                updateSpectators(Array.from(data.spectators || []));
+
             }
             if (data.type === "tile_update" && selectedRoom=== data.roomName) {
 
@@ -580,11 +554,18 @@
             }
             if (data.type === "room_update" && selectedRoom=== data.roomName) {
 
+                if(data.gameStarted === true){
+                    document.getElementById('gameStatus').textContent = "Battle On";
+
+                }
+
                 updatePlayers(data.players);
+                updateSpectators(Array.from(data.spectators || []));
             }
             if (data.type === "player_left" && selectedRoom=== data.roomName) {
 
                 removePlayerByName(data.playerName)
+                updateSpectators(Array.from(data.spectators || []));
             }
 
         }
@@ -598,6 +579,26 @@
 
                 }));
         });
+
+
+        function updateSpectators(spectators) {
+            // Target the Spectators section specifically
+            const container = document.querySelector('.section.divider:last-of-type');
+            if (!container) return;
+
+            // Remove all old spectator rows (clean slate)
+            container.querySelectorAll('.spectator-row').forEach(el => el.remove());
+
+            // Add the updated spectators
+            spectators.forEach(name => {
+                const row = document.createElement('div');
+                row.className = 'spectator-row';
+                row.innerHTML = `<span class="spectator-name">${name}</span>`;
+                container.appendChild(row);
+            });
+        }
+
+
 
 
         function removePlayerByName(name) {
@@ -669,11 +670,22 @@
         }
 
         function resetGame() {
-           // document.getElementById('gameStatus').textContent = "Didn't start";
+            document.getElementById('gameStatus').textContent = "Didn't start";
+            socket.send(JSON.stringify({
+                  type: "reset-room",
+                  roomName: selectedRoom,
+
+             }));
+
         }
 
         function finishGame() {
-           // document.getElementById('gameStatus').textContent = "Finished";
+            document.getElementById('gameStatus').textContent = "Didn't start";
+               socket.send(JSON.stringify({
+                  type: "finish-room",
+                  roomName: selectedRoom,
+
+             }));
         }
 </script>
 </body>

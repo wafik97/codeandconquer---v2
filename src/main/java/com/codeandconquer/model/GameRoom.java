@@ -113,6 +113,33 @@ public class GameRoom {
         return "not_found";
     }
 
+    public synchronized void finish() {
+        players.clear();
+        playersSessions.clear();
+        Arrays.fill(taken_color, 0);
+        spectators.clear();
+        spectatorsSessions.clear();
+        claimedLands.clear();
+        for (int i = 0; i < 25; i++) {
+            claimedLands.put(i, null);
+        }
+        gameStarted = false;
+        phase = "first";
+        count = 0;
+    }
+
+    public synchronized void reset() {
+
+        claimedLands.clear();
+        for (int i = 0; i < 25; i++) {
+            claimedLands.put(i, null);
+        }
+
+        phase = "first";
+        count = 0;
+    }
+
+
 
     public synchronized boolean isGameStarted() {
         return gameStarted;

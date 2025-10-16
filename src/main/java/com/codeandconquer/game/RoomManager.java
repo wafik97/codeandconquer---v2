@@ -25,6 +25,21 @@ import java.util.*;
         public synchronized Set<String> getAllRoomNames() {
             return rooms.keySet();
         }
+
+        public synchronized void resetRoom(String roomName) {
+            GameRoom room = rooms.get(roomName);
+            if (room != null) {
+                room.reset();
+            }
+        }
+
+        public synchronized void finishRoom(String roomName) {
+            GameRoom room = rooms.get(roomName);
+            if (room != null) {
+                room.finish();
+            }
+        }
+
     }
 
 

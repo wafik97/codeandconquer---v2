@@ -230,6 +230,19 @@ function joinSelectedRoom() {
 
 
 
+// Finish the room
+document.querySelector('#surrenderModal button').addEventListener('click', function() {
+    socket.send(JSON.stringify({
+          type: "finish-room",
+          roomName: selectedRoom,
+
+        }));
+
+});
+
+
+
+
 
 
 // ----- MAP & UI (kept unchanged) -----
@@ -279,10 +292,17 @@ function handleServerMessage(data) {
     if (data.type === "player_left" && gameStarted === true) {
 
         surrenderModal.style.display = 'block';
-        if(playerRole=== "spectator"){
-        document.getElementById("declareWinner").innerText = "The game came to an end, the other competitor has surrendered";
 
+        const continueBtn = document.querySelector('#surrenderModal button');
+        if (playerRole === "player") {
+            continueBtn.style.display = 'block';
+        } else {
+            continueBtn.style.display = 'none';
+            document.getElementById("declareWinner").innerText = "The game came to an end, the other competitor has surrendered";
         }
+
+
+
         createConfetti();
         createStarBurst();
 
@@ -293,6 +313,13 @@ function handleServerMessage(data) {
         playersDiv.innerHTML = "";
 
     }
+
+
+    if (data.type === "close_room" ) {
+
+             window.location.reload();
+
+        }
 
 
      if (data.type === "check_result") {
@@ -331,6 +358,20 @@ function handleServerMessage(data) {
                         console.log('Unknown status');
                 }
             }
+
+            if (data.reset_close === true) {
+                const surrenderModal = document.getElementById("surrenderModal");
+                const phaseModal = document.getElementById("phaseModal");
+
+
+                if (surrenderModal && surrenderModal.style.display !== "none") {
+                    surrenderModal.style.display = "none";
+                }
+                if (phaseModal && phaseModal.style.display !== "none") {
+                    phaseModal.style.display = "none";
+                }
+            }
+
 
     // Room update (players/spectators/claimedLands/gameStarted)
     if (data.type === "room_update" || data.players || data.claimedLands) {
@@ -524,15 +565,15 @@ function claimCell(i) {
     }
 
     // Initialize CodeMirror
-    var editor = CodeMirror.fromTextArea(document.getElementById('code-editor'), {
-        lineNumbers: true,          // Show line numbers
-        mode: "text/x-java",         // Set the mode for JavaScript (you can change this to other languages like python, html, etc.)
-        theme: "dracula",           // Optional: a dark theme, you can choose others
-        indentUnit: 4,              // Indentation settings
-        smartIndent: true,          // Enable smart indentation
-        tabSize: 4,                 // Tab size
-        matchBrackets: true,        // Highlight matching brackets
-        autoCloseBrackets: true,    // Auto-close brackets s
-        extraKeys: { "Ctrl-Space": "autocomplete" },
-    });
+//    var editor = CodeMirror.fromTextArea(document.getElementById('code-editor'), {
+//        lineNumbers: true,          // Show line numbers
+//        mode: "text/x-java",         // Set the mode for JavaScript (you can change this to other languages like python, html, etc.)
+//        theme: "dracula",           // Optional: a dark theme, you can choose others
+//        indentUnit: 4,              // Indentation settings
+//        smartIndent: true,          // Enable smart indentation
+//        tabSize: 4,                 // Tab size
+//        matchBrackets: true,        // Highlight matching brackets
+//        autoCloseBrackets: true,    // Auto-close brackets s
+//        extraKeys: { "Ctrl-Space": "autocomplete" },
+//    });
 

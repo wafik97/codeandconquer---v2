@@ -87,7 +87,7 @@ h1::after {
 .cell {
   aspect-ratio: 1 / 1;
   width: 100%;
-  border: 2px solid #00ff88;
+  border: 25px solid #00ff88;
   position: relative;
   cursor: pointer;
   background: linear-gradient(135deg, #1e2a3a 0%, #0f1923 100%);
@@ -125,11 +125,11 @@ h1::after {
 .cell::after {
   content: '';
   position: absolute;
-  top: 5px;
-  left: 5px;
-  right: 5px;
-  bottom: 5px;
-  border: 1px solid rgba(0, 255, 136, 0.2);
+  top: 20px;
+  left: 20px;
+  right: 20px;
+  bottom: 20px;
+  border: 20px solid rgba(0, 255, 136, 0.2);
   pointer-events: none;
 }
 
@@ -616,4 +616,14 @@ select:focus {
   .CodeMirror {
     height: 150px;
   }
+}
+
+.cell[style*="border-color: red"] {
+  border-width: 20px !important;
+  box-shadow: 0 0 15px rgba(255, 0, 0, 0.6), inset 0 0 10px rgba(255, 0, 0, 0.4);
+}
+
+.cell[style*="border-color: blue"] {
+  border-width: 20px !important;
+  box-shadow: 0 0 15px rgba(0, 0, 255, 0.6), inset 0 0 10px rgba(0, 0, 255, 0.4);
 }
