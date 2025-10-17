@@ -11,32 +11,33 @@
     let selectedCellId = null;
     //let currentPuzzle = { question: "What is 2 + 2?", answer: "4" }; // example puzzle
     const puzzles = [
-        { question: "What is 1 + 1?", answer: "2" },
-        { question: "What is 2 + 2?", answer: "4" },
-        { question: "What is 3 + 1?", answer: "4" },
-        { question: "What is 4 + 4?", answer: "8" },
-        { question: "What is 5 + 2?", answer: "7" },
-        { question: "What is 6 + 3?", answer: "9" },
-        { question: "What is 7 + 1?", answer: "8" },
-        { question: "What is 8 + 2?", answer: "10" },
-        { question: "What is 9 + 0?", answer: "9" },
-        { question: "What is 10 + 5?", answer: "15" },
-        { question: "What is 3 - 1?", answer: "2" },
-        { question: "What is 5 - 2?", answer: "3" },
-        { question: "What is 6 - 4?", answer: "2" },
-        { question: "What is 7 - 3?", answer: "4" },
-        { question: "What is 9 - 5?", answer: "4" },
-        { question: "What is 10 - 7?", answer: "3" },
-        { question: "What is 4 x 2?", answer: "8" },
-        { question: "What is 3 x 3?", answer: "9" },
-        { question: "What is 2 x 5?", answer: "10" },
-        { question: "What is 6 x 1?", answer: "6" },
-        { question: "What is 8 ÷ 2?", answer: "4" },
-        { question: "What is 10 ÷ 5?", answer: "2" },
-        { question: "What is 9 ÷ 3?", answer: "3" },
-        { question: "What is 6 ÷ 2?", answer: "3" },
-        { question: "What is 12 ÷ 4?", answer: "3" }
+        { question: "What is 11 + 3?", answer: "14" },
+        { question: "What is 14 - 6?", answer: "8" },
+        { question: "What is 7 x 2?", answer: "14" },
+        { question: "What is 20 ÷ 4?", answer: "5" },
+        { question: "What comes after 29?", answer: "30" },
+        { question: "What is 5 squared?", answer: "25" },
+        { question: "What is the square root of 81?", answer: "9" },
+        { question: "If you have 3 apples and eat 1, how many?", answer: "2" },
+        { question: "Which number is even: 3 or 4?", answer: "4" },
+        { question: "What is 100 - 75?", answer: "25" },
+        { question: "What is 8 + 6?", answer: "14" },
+        { question: "What is 18 ÷ 3?", answer: "6" },
+        { question: "What is 6 x 6?", answer: "36" },
+        { question: "What is 15 - 7?", answer: "8" },
+        { question: "What is 7 + 8?", answer: "15" },
+        { question: "What is 9 x 1?", answer: "9" },
+        { question: "What is 24 ÷ 8?", answer: "3" },
+        { question: "What is 12 + 5?", answer: "17" },
+        { question: "What is 3 x 5?", answer: "15" },
+        { question: "What is 10 - 4?", answer: "6" },
+        { question: "What is 6 ÷ 3?", answer: "2" },
+        { question: "If 2 + x = 5, what is x?", answer: "3" },
+        { question: "What is 4 x 4?", answer: "16" },
+        { question: "What is 20 ÷ 2?", answer: "10" },
+        { question: "What is 2²?", answer: "4" }
     ];
+
 
     let currentPuzzle = null;
 
@@ -83,7 +84,14 @@ function connectWebSocket() {
             connected = "connected";
         }
         if (connected === "lost") {
-            window.location.reload();
+             window.location.reload();
+             //             socket.send(JSON.stringify({
+             //                   type: "update_me",
+             //                   roomName: selectedRoom,
+             //                   playerName: playerName,
+             //                   role: playerRole
+             //                 }));
+             //               connected="connected"
         }
         console.log("✅ Connected to WebSocket");
         const statusDiv = document.getElementById('status');
@@ -410,13 +418,13 @@ function handleServerMessage(data) {
                 if (cell) {
                     // minimal visual change: change border color per owner
                     if (col === null || col === undefined) {
-                        cell.style.outlineColor = "#00ff88";
+                        cell.style.borderColor = "#00ff88";
                     } else if (col === "red") {
-                        cell.style.outlineColor = "#ff8888";
+                        cell.style.borderColor = "#ff8888";
                     } else if (col === "blue") {
-                        cell.style.outlineColor = "#8888ff";
+                        cell.style.borderColor = "#8888ff";
                     } else {
-                        cell.style.outlineColor = "#ffffff";
+                        cell.style.borderColor = "#ffffff";
                     }
                 }
             }
@@ -436,13 +444,13 @@ function handleServerMessage(data) {
         const cell = document.querySelector(`.cell[data-index='${id}']`);
         if (cell) {
             if (col === null || col === undefined) {
-                cell.style.outlineColor = "#00ff88";
+                cell.style.borderColor = "#00ff88";
             } else if (col === "red") {
-                cell.style.outlineColor = "#ff8888";
+                cell.style.borderColor = "#ff8888";
             } else if (col === "blue") {
-                cell.style.outlineColor = "#8888ff";
+                cell.style.borderColor = "#8888ff";
             } else {
-                cell.style.outlineColor = "#ffffff";
+                cell.style.borderColor = "#ffffff";
             }
         }
 
@@ -467,7 +475,7 @@ function claimCell(i) {
 
 
     const cell = document.querySelector(`.cell[data-index='${i}']`);
-    const currentBorder = cell.style.outlineColor;
+    const currentBorder = cell.style.borderColor;
 
     // Check if already claimed
     if (currentBorder && currentBorder !== 'rgb(0, 255, 136)' && currentBorder !== '') {
@@ -488,6 +496,13 @@ function claimCell(i) {
         document.getElementById('puzzle-answer').value = '';
         document.getElementById('puzzle-panel').style.display = 'block';
         //editor.setValue(starterJavaCode);
+
+        document.getElementById('puzzle-answer').addEventListener('keydown', function(event) {
+            if (event.key === 'Enter') {
+                document.querySelector('button[onclick="submitAnswer()"]').click();
+            }
+        });
+
     }
 
     function submitAnswer() {

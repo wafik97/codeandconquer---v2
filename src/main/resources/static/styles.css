@@ -87,9 +87,7 @@ h1::after {
 .cell {
   aspect-ratio: 1 / 1;
   width: 100%;
-  border: 0;
-  outline: px25 solid #00ff88;
-  outline-offset: -25px;
+  border: 8px solid #00ff88;
   position: relative;
   cursor: pointer;
   background: linear-gradient(135deg, #1e2a3a 0%, #0f1923 100%);
@@ -118,12 +116,12 @@ h1::after {
 
 .cell:hover,
 .cell:active {
-  outline-color: #00ffff;
+  border-color: #00ffff;
   box-shadow: 0 0 20px rgba(0, 255, 255, 0.5), inset 0 0 20px rgba(0, 255, 255, 0.1);
   transform: scale(1.02);
   z-index: 10;
 }
-
+/*
 .cell::after {
   content: '';
   position: absolute;
@@ -133,7 +131,7 @@ h1::after {
   bottom: 20px;
   border: 20px solid rgba(0, 255, 136, 0.2);
   pointer-events: none;
-}
+}*/
 
 .cell span {
   position: absolute;
@@ -620,12 +618,3 @@ select:focus {
   }
 }
 
-.cell[style*="border-color: red"] {
-  border-width: 20px !important;
-  box-shadow: 0 0 15px rgba(255, 0, 0, 0.6), inset 0 0 10px rgba(255, 0, 0, 0.4);
-}
-
-.cell[style*="border-color: blue"] {
-  border-width: 20px !important;
-  box-shadow: 0 0 15px rgba(0, 0, 255, 0.6), inset 0 0 10px rgba(0, 0, 255, 0.4);
-}

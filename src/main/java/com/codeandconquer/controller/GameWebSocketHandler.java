@@ -243,7 +243,7 @@ public class GameWebSocketHandler extends TextWebSocketHandler {
 
     @Override
     public void afterConnectionClosed(WebSocketSession session, CloseStatus status) throws Exception {
-       /* if(managerSession==session){
+        if(managerSession==session){
             managerSession=null;
             return;
         }
@@ -258,7 +258,7 @@ public class GameWebSocketHandler extends TextWebSocketHandler {
         res.put("roomName", room);
         res.put("playerName", name);
         res.put("spectators", roomManager.getRoom(room).getSpectators());
-        broadcast(room, res);*/
+        broadcast(room, res);
 
 
     }
