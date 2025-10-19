@@ -2,6 +2,9 @@ package com.codeandconquer.controller;
 
 import com.codeandconquer.game.RoomManager;
 import com.codeandconquer.model.GameRoom;
+import com.codeandconquer.piston.model.CodeRequest;
+import com.codeandconquer.piston.model.RunResponse;
+import com.codeandconquer.piston.service.PistonService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.stereotype.Component;
 import org.springframework.web.socket.*;
@@ -16,6 +19,7 @@ public class GameWebSocketHandler extends TextWebSocketHandler {
 
     private final RoomManager roomManager = new RoomManager();
     private final ObjectMapper mapper = new ObjectMapper();
+    PistonService pistonService = new PistonService();
     // map session -> roomName
     private final Map<WebSocketSession, String> sessionRooms = new ConcurrentHashMap<>();
     private WebSocketSession managerSession =null;
@@ -47,10 +51,34 @@ public class GameWebSocketHandler extends TextWebSocketHandler {
             finishRoom((String) payload.get("roomName"));
         } else if ("reset-room".equals(type)) {
             resetRoom((String) payload.get("roomName"));
+        } else if ("compile".equals(type)) {
+            handleCompile(session, payload);
         } else {
             System.out.println("Unknown message type: " + type + " payload: " + payload);
         }
     }
+
+
+
+    private void handleCompile(WebSocketSession session, Map<String, Object> msg) throws Exception {
+
+        CodeRequest request = new CodeRequest("python", "3", (String) msg.get("code"));
+        RunResponse code_response = pistonService.execute(request);
+
+        String result= code_response.run.stdout;
+
+        Map<String, Object> response = new HashMap<>();
+        response.put("type", "codeUpdate");
+
+        response.put("result", result);
+
+
+        session.sendMessage(new TextMessage(mapper.writeValueAsString(response)));
+
+
+    }
+
+
 
 
     private void resetRoom(String roomName) throws Exception {
@@ -253,12 +281,14 @@ public class GameWebSocketHandler extends TextWebSocketHandler {
         String name =roomManager.getRoom(sessionRooms.get(session)).removeSession(session);
         String room =roomManager.getRoom(sessionRooms.get(session)).getRoomName();
         sessionRooms.remove(session);
-        Map<String, Object> res = new HashMap<>();
-        res.put("type", "player_left");
-        res.put("roomName", room);
-        res.put("playerName", name);
-        res.put("spectators", roomManager.getRoom(room).getSpectators());
-        broadcast(room, res);
+        if(!Objects.equals(name, "nvm")) {
+            Map<String, Object> res = new HashMap<>();
+            res.put("type", "player_left");
+            res.put("roomName", room);
+            res.put("playerName", name);
+            res.put("spectators", roomManager.getRoom(room).getSpectators());
+            broadcast(room, res);
+        }
 
 
     }

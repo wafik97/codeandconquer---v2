@@ -11,43 +11,45 @@
     let selectedCellId = null;
     //let currentPuzzle = { question: "What is 2 + 2?", answer: "4" }; // example puzzle
     const puzzles = [
-        { question: "What is 11 + 3?", answer: "14" },
-        { question: "What is 14 - 6?", answer: "8" },
-        { question: "What is 7 x 2?", answer: "14" },
-        { question: "What is 20 ÷ 4?", answer: "5" },
-        { question: "What comes after 29?", answer: "30" },
-        { question: "What is 5 squared?", answer: "25" },
-        { question: "What is the square root of 81?", answer: "9" },
-        { question: "If you have 3 apples and eat 1, how many?", answer: "2" },
-        { question: "Which number is even: 3 or 4?", answer: "4" },
-        { question: "What is 100 - 75?", answer: "25" },
-        { question: "What is 8 + 6?", answer: "14" },
-        { question: "What is 18 ÷ 3?", answer: "6" },
-        { question: "What is 6 x 6?", answer: "36" },
-        { question: "What is 15 - 7?", answer: "8" },
-        { question: "What is 7 + 8?", answer: "15" },
-        { question: "What is 9 x 1?", answer: "9" },
-        { question: "What is 24 ÷ 8?", answer: "3" },
-        { question: "What is 12 + 5?", answer: "17" },
-        { question: "What is 3 x 5?", answer: "15" },
-        { question: "What is 10 - 4?", answer: "6" },
-        { question: "What is 6 ÷ 3?", answer: "2" },
-        { question: "If 2 + x = 5, what is x?", answer: "3" },
-        { question: "What is 4 x 4?", answer: "16" },
-        { question: "What is 20 ÷ 2?", answer: "10" },
-        { question: "What is 2²?", answer: "4" }
+        { question: "print the first fruit of the alphabet", answer: "apple\n" },
+        { question: "print the number formed by combining '5' and '6'", answer: "56\n" },
+        { question: "print the number that comes after 15 + 1", answer: "16\n" },
+        { question: "print the result of removing 3 from a dozen", answer: "9\n" },
+        { question: "print the number of fingers on a hand multiplied by 2", answer: "10\n" },
+        { question: "print the first number greater than 99", answer: "100\n" },
+        { question: "print the square of the smallest even number", answer: "4\n" },
+        { question: "print how many times 3 fits into 9", answer: "3\n" },
+        { question: "print the remainder when 18 is divided by 4", answer: "2\n" },
+        { question: "print the greeting of a friendly AI", answer: "hello world\n" },
+        { question: "print the result of turning a square number into a line", answer: "121\n" },
+        { question: "print the dessert that follows 'apple'", answer: "pie\n" },
+        { question: "print the number of equal parts when a pizza is sliced into thirds", answer: "3\n" },
+        { question: "print the square root of the number of days in a week", answer: "7\n" },
+        { question: "print the total number of legs of 3 cats", answer: "12\n" },
+        { question: "print what happens when you multiply 3 by 2 and add 1", answer: "7\n" },
+        { question: "print half of a baker's dozen", answer: "6\n" },
+        { question: "print how many sides a triangle has", answer: "3\n" },
+        { question: "print the number after '2' squared", answer: "5\n" },
+        { question: "print the sum of the first 3 prime numbers", answer: "10\n" },
+        { question: "print what you get when you subtract 1 from 2", answer: "1\n" },
+        { question: "print the number of wheels on 2 cars", answer: "8\n" },
+        { question: "print how many hours there are in half a day", answer: "12\n" },
+        { question: "print the result of doubling 7", answer: "14\n" },
+        { question: "print how many days in February in a leap year", answer: "29\n" }
     ];
+
 
 
     let currentPuzzle = null;
 
     const starterJavaCode =
-    `   import java.util.*;
-        public class Main {
-            public static void main(String[] args) {
-             // Write your code here
-          }
-        }`;
+    `     # Write your code here
+
+
+
+
+
+          `;
 
 
 
@@ -322,6 +324,28 @@ function handleServerMessage(data) {
 
     }
 
+    if (data.type === "codeUpdate" ) {
+
+            if (data.result === currentPuzzle.answer) {
+                        // Hide puzzle
+                        document.getElementById('puzzle-panel').style.display = 'none';
+
+                        // Send message to server to claim land
+                        socket.send(JSON.stringify({
+                            type: "select",
+                            roomName: selectedRoom,
+                            playerName: playerName,
+                            tileId: selectedCellId
+                        }));
+
+                        selectedCellId = null;
+                    } else {
+                        alert("❌ Wrong answer, try again!");
+                    }
+
+    }
+
+
 
     if (data.type === "close_room" ) {
 
@@ -491,46 +515,42 @@ function claimCell(i) {
     function showPuzzle(cellIndex) {
         currentPuzzle = puzzles[cellIndex];
 
+
+
+
         document.getElementById('puzzle-title').innerText = `Puzzle for cell ${cellIndex + 1}`;
         document.getElementById('puzzle-question').innerText = currentPuzzle.question;
-        document.getElementById('puzzle-answer').value = '';
-        document.getElementById('puzzle-panel').style.display = 'block';
-        //editor.setValue(starterJavaCode);
 
+        document.getElementById('puzzle-panel').style.display = 'block';
+        editor.setValue(starterJavaCode);
+        /*
         document.getElementById('puzzle-answer').addEventListener('keydown', function(event) {
             if (event.key === 'Enter') {
                 document.querySelector('button[onclick="submitAnswer()"]').click();
             }
-        });
+        });*/
 
     }
 
     function submitAnswer() {
         //const answer = document.getElementById('puzzle-answer').value.trim();
-        //var answer = editor.getValue();
-        const answer = document.getElementById('puzzle-answer').value.trim();
+        var answer = editor.getValue();
+        //const answer = document.getElementById('puzzle-answer').value.trim();
         if (answer === "") {
             alert("Please enter an answer.");
             return;
         }
 
-        // Check answer locally for now
-        if (answer === currentPuzzle.answer) {
-            // Hide puzzle
-            document.getElementById('puzzle-panel').style.display = 'none';
-
-            // Send message to server to claim land
-            socket.send(JSON.stringify({
-                type: "select",
-                roomName: selectedRoom,
-                playerName: playerName,
-                tileId: selectedCellId
+        socket.send(JSON.stringify({
+              type: "compile",
+              roomName: selectedRoom,
+              playerName: playerName,
+              code: answer
             }));
 
-            selectedCellId = null;
-        } else {
-            alert("❌ Wrong answer, try again!");
-        }
+
+        // Check answer locally for now
+
     }
 
 
@@ -580,15 +600,15 @@ function claimCell(i) {
     }
 
     // Initialize CodeMirror
-//    var editor = CodeMirror.fromTextArea(document.getElementById('code-editor'), {
-//        lineNumbers: true,          // Show line numbers
-//        mode: "text/x-java",         // Set the mode for JavaScript (you can change this to other languages like python, html, etc.)
-//        theme: "dracula",           // Optional: a dark theme, you can choose others
-//        indentUnit: 4,              // Indentation settings
-//        smartIndent: true,          // Enable smart indentation
-//        tabSize: 4,                 // Tab size
-//        matchBrackets: true,        // Highlight matching brackets
-//        autoCloseBrackets: true,    // Auto-close brackets s
-//        extraKeys: { "Ctrl-Space": "autocomplete" },
-//    });
+    var editor = CodeMirror.fromTextArea(document.getElementById('code-editor'), {
+        lineNumbers: true,          // Show line numbers
+        mode: "text/x-java",         // Set the mode for JavaScript (you can change this to other languages like python, html, etc.)
+        theme: "dracula",           // Optional: a dark theme, you can choose others
+        indentUnit: 4,              // Indentation settings
+        smartIndent: true,          // Enable smart indentation
+        tabSize: 4,                 // Tab size
+        matchBrackets: true,        // Highlight matching brackets
+        autoCloseBrackets: true,    // Auto-close brackets s
+        extraKeys: { "Ctrl-Space": "autocomplete" },
+    });
 

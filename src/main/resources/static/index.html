@@ -14,6 +14,10 @@
     <!-- CodeMirror JavaScript -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.58.2/codemirror.min.js"></script>
 
+    <!-- Add CodeMirror theme -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.58.2/theme/dracula.min.css">
+
+
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
@@ -58,9 +62,12 @@
 
 <div id="puzzle-panel">
     <h3 id="puzzle-title"></h3>
-    <p id="puzzle-question">What is 2 + 2?</p>
-    <input type="text" id="puzzle-answer">
-<!--    <textarea id="code-editor"></textarea>-->
+    <p id="puzzle-question">Print "hello world"</p>
+    <textarea id="code-editor"></textarea>
+
+    <br>
+    <pre id="output" style="color:#00ff88; white-space: pre-wrap;"></pre>
+
     <br>
     <button onclick="submitAnswer()">Submit Answer</button>
 </div>
